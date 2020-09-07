@@ -19,6 +19,7 @@ module.exports = {
             }
         });
     },
+    
     queryParamArr: async (query, value) => {
         return new Promise(async (resolve, reject) => {
             try {
@@ -37,6 +38,7 @@ module.exports = {
             }
         });
     },
+
     Transaction: async (...args) => {
         return new Promise(async (resolve, reject) => {
             try {

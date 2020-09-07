@@ -1,4 +1,4 @@
-const UserModel = require('../models/user');
+const RunningModel = require('../models/running');
 const util = require('../modules/util');
 const CODE = require('../modules/statusCode');
 const MSG = require('../modules/responseMessage');
@@ -6,9 +6,9 @@ const encrypt = require('../modules/crypto');
 const jwt = require('../modules/jwt');
 
 module.exports = {
-    signUUID: async (req, res) => {
-        const {uuid} = req.body;
-        if (!uuid) {
+    startMatching: async (req, res) => {
+        const { token, time, wantGender } = req.body;
+        if (!token || !time || !wantGender) {
             res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NULL_VALUE));
             return;
         }
