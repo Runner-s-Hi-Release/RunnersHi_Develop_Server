@@ -24,9 +24,8 @@ module.exports = {
     UPDATE_PROFILE_SUCCESS: "프로필 업데이트 성공",
     READ_PROFILE_SUCCESS: '프로필 조회 성공',
 
-    // 셀카 업데이트
-    UPDATE_SELFIE_SUCCESS: "셀카 업데이트 성공",
-    UNSUPPORTED_TYPE: '지원하지 않는 타입입니다.',
+    // 매칭
+    MATCH_SUCCESS: "상대 러너와 매칭 성공",
 
     DB_ERROR: 'DB 오류'
 };
