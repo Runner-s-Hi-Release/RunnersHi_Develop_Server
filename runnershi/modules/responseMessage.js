@@ -26,6 +26,7 @@ module.exports = {
 
     // 매칭
     MATCH_SUCCESS: "상대 러너와 매칭 성공",
+    MATCH_TIMEOUT: "매칭 시간 초과",
 
     DB_ERROR: 'DB 오류'
 };

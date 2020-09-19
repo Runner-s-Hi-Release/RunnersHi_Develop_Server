@@ -3,7 +3,7 @@ const jwt = require('../modules/jwt');
 
 const user = {
     signUp: async (uuid) => {
-        const adjective = ["화가 난 ", "졸린 ", "배고픈 ", "바람난 ", "불타오르는 ", "안 씻는 ", "가출한 ", "외로운 ", "똑똑한 ", "춤추는 ", "귀여운 ", "배부른"];
+        const adjective = ["화가 난 ", "졸린 ", "배고픈 ", "바람난 ", "불타오르는 ", "안 씻는 ", "가출한 ", "외로운 ", "똑똑한 ", "춤추는 ", "귀여운 ", "배부른 "];
         const people = ["지은", "태영", "가은", "유림", "예린", "수현", "세곤", "채원", "태진", "세환", "가희", "민희", "영재"];
         const gender = Math.ceil(Math.random() * 2);
         const nickname = adjective[Math.floor(Math.random() * adjective.length)] + people[Math.floor(Math.random() * people.length)];

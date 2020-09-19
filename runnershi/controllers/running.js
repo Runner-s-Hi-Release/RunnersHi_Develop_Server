@@ -41,8 +41,14 @@ module.exports = {
                 const intervalId = setInterval(function() {
                     counter += 1;
                     if (waitingList[waitIdx].matched) {
+                        const game_idx = waitingList[waitIdx]
+                        const run_idx = await RunningModel.createRun(moment().format("YYYY-MM-DD HH:mm:ss"), user_idx, game_idx);
                         waitingList.splice(waitIdx, 1);
-                        res.
+                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS, {run_idx: run_idx}));
+                    }
+                    else if (counter > 180) {
+                        waitingList.splice(waitIdx, 1);
+                        res.status(CODE.REQUEST_TIMEOUT).send(util.fail(CODE.REQUEST_TIMEOUT, MSG.MATCH_TIMEOUT));
                     }
                 }, 1000);
             }
@@ -50,13 +56,12 @@ module.exports = {
                 const game_idx = await RunningModel.insertGame();
                 waitingList[opponentIdx].game_idx = game_idx;
                 waitingList[opponentIdx].matched = true;
-                const run_idx = await RunningModel.insertRun(0, 0, [], 0, )
+                const run_idx = await RunningModel.createRun(moment().format("YYYY-MM-DD HH:mm:ss"), user_idx, game_idx);
                 res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS, {run_idx: run_idx}));
             }
         } catch (err) {
             console.log("startMatching Error");
             throw(err);
         }
-        
     }
 }
