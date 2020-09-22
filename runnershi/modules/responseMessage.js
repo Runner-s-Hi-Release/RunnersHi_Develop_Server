@@ -22,7 +22,11 @@ module.exports = {
     
     // 러닝
     UPDATE_RUN_SUCCESS: "러닝 업데이트 성공",
-    READ_PROFILE_SUCCESS: '프로필 조회 성공',
+    UPDATE_RUN_FAIL: '러닝 업데이트 실패',
+    OPPONENT_RUN_SUCCESS: "상대방 러닝 조회 성공",
+    OPPONENT_RUN_FAIL: "상대방 러닝 조회 실패",
+    OPPONENT_INFO_SUCCESS: "상대방 정보 조회 성공",
+    OPPONENT_INFO_FAIL: "상대방 정보 조회 실패",
 
     // 매칭
     MATCH_SUCCESS: "상대 러너와 매칭 성공",

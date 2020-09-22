@@ -24,13 +24,13 @@ module.exports = {
                 res.status(CODE.DB_ERROR).send(util.fail(CODE.DB_ERROR, MSG.READ_FAIL));
                 return;
             }
-            const opponentIdx = waitingList.find((awaiter) => {
+            const opponentIdx = waitingList.findIndex((awaiter) => {
                 if (awaiter.time === time && (awaiter.wantGender === 3 || awaiter.wantGender === gender) && (awaiter.gender === wantGender || wantGender === 3) && !awaiter.matched) {
                     return true;
                 }
             });
             console.log(opponentIdx);
-            if (opponentIdx === undefined) {
+            if (opponentIdx === -1) {
                 let counter = 0;
                 const waitIdx = waitingList.push({
                     time: time,
@@ -39,10 +39,13 @@ module.exports = {
                     user_idx: user_idx,
                     matched: false
                 }) - 1;
+                console.log("waitIdx: ", waitIdx);
+
+                // async await 점검
                 const intervalId = setInterval(async function() {
                     counter += 1;
                     if (waitingList[waitIdx].matched) {
-                        const game_idx = waitingList[waitIdx]
+                        const game_idx = waitingList[waitIdx].game_idx;
                         const run_idx = await RunningModel.createRun(moment().format("YYYY-MM-DD HH:mm:ss"), user_idx, game_idx);
                         waitingList.splice(waitIdx, 1);
                         clearInterval(intervalId);
@@ -84,7 +87,12 @@ module.exports = {
             else {
                 const result = await RunningModel.updateRun(run_idx, distance, time, user_idx);
                 console.log("UPDATE RESULT: ", result);
-                res.status(CODE.OK).send(util.success(CODE.OK, MSG.UPDATE_RUN_SUCCESS));
+                if (result.changedRows === 0) {
+                    res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.UPDATE_RUN_FAIL));
+                }
+                else {
+                    res.status(CODE.OK).send(util.success(CODE.OK, MSG.UPDATE_RUN_SUCCESS));
+                }
             }
         } catch (err) {
             console.log("updateRun Error");
@@ -92,11 +100,58 @@ module.exports = {
         }
     },
 
+    getOpponentInfo: async (req, res) => {
+        try {
+            const run_idx = req.params.idx;
+            const user_idx = req.decoded.userIdx;
+            if (!run_idx) {
+                res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NULL_VALUE));
+                return;
+            }
+            if (!user_idx) {
+                res.status(CODE.DB_ERROR).send(util.fail(CODE.DB_ERROR, MSG.READ_FAIL));
+                return;
+            }
+            else {
+                const result = await RunningModel.getOpponentInfo(run_idx, user_idx);
+                console.log("OpponentInfo Result: ", result);
+                if (result.length === 1) {
+                    res.status(CODE.OK).send(util.success(CODE.OK, MSG.OPPONENT_INFO_SUCCESS, {nickname: result.nickname, win: result.win, lose: result.lose, image: result.image}));
+                }
+                else {
+                    res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.OPPONENT_INFO_FAIL));
+                }
+            }
+        } catch (err) {
+            console.log("getOpponentInfo Error");
+            throw(err);
+        }
+    },
+
     getOpponentRun: async (req, res) => {
         try {
-
+            const run_idx = req.params.idx;
+            const user_idx = req.decoded.userIdx;
+            if (!run_idx) {
+                res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NULL_VALUE));
+                return;
+            }
+            if (!user_idx) {
+                res.status(CODE.DB_ERROR).send(util.fail(CODE.DB_ERROR, MSG.READ_FAIL));
+                return;
+            }
+            else {
+                const result = await RunningModel.getOpponentRun(run_idx, user_idx);
+                console.log("OpponentRun Result: ", result);
+                if (result.length === 1) {
+                    res.status(CODE.OK).send(util.success(CODE.OK, MSG.OPPONENT_RUN_SUCCESS, {distance: result[0].distance, time: result[0].time}));
+                }
+                else {
+                    res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.OPPONENT_RUN_FAIL));
+                }
+            }
         } catch (err) {
-            console.log("getOpponentRun");
+            console.log("getOpponentRun Error");
             throw(err);
         }
     },

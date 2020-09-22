@@ -1,5 +1,6 @@
 const pool = require('../modules/pool');
 const jwt = require('../modules/jwt');
+const { query } = require('express');
 
 const user = {
     signUp: async (uuid) => {
@@ -21,7 +22,9 @@ const user = {
                 nickname: nickname,
                 gender: gender,
                 image: image,
-                badge: badge
+                badge: badge,
+                win: 0,
+                lose: 0
             };
 
             return user;
@@ -32,9 +35,35 @@ const user = {
     },
 
     getUserByUUID: async (uuid) => {
-        const query = `SELECT * FROM user WHERE uuid="${uuid}"`;
         try {
-            return await pool.queryParam(query);
+            const user_query = `SELECT * FROM user WHERE uuid="${uuid}"`;
+            const user_result = await pool.queryParam(user_query);
+            console.log("USER RESULT: ", user_result);
+            if (user_result.length === 0) {
+                return user_result;
+            }
+            else {
+                const user_idx = user_result[0].user_idx;
+                const record_query = `SELECT COUNT(if((user_idx="${user_idx}" AND (result=1 OR result=5)), 1, null)) as win, COUNT(if((user_idx="${user_idx}" AND (result=2 OR result=3)), 1, null)) as lose FROM run`;
+                const record_result = await queryParam(record_query);
+                if (record_result.win === undefined) {
+                    record_result.win = 0;
+                }
+                if (record_result.lose === undefined) {
+                    record_result.lose = 0;
+                }
+                const final_result = {
+                    user_idx: user_idx,
+                    uuid: uuid,
+                    nickname: user_result[0].nickname,
+                    gender: user_result[0].gender,
+                    image: user_result[0].image,
+                    badge: user_result[0].badge,
+                    win: record_result[0].win,
+                    lose: record_result[0].lose
+                };
+                return final_result;
+            }
         } catch (err) {
             console.log("getUserByUUID ERROR: ", err);
             throw err;

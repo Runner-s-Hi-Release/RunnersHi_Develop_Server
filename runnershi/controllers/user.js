@@ -22,13 +22,13 @@ module.exports = {
             }
             else {
                 const { token, refreshToken } = await jwt.sign(payload);
-                res.status(CODE.OK).send(util.success(CODE.OK, MSG.CREATED_USER, { accessToken: token }));
+                res.status(CODE.OK).send(util.success(CODE.OK, MSG.CREATED_USER, { accessToken: token, nickname: payload.nickname, gender: payload.gender, image: payload.image, badge: payload.badge, win: 0, lose: 0 }));
             }
         }
         else {
             // 등록돼있을 때
             const { token, refreshToken } = await jwt.sign(user[0]);
-            res.status(CODE.OK).send(util.success(CODE.OK, MSG.LOGIN_SUCCESS, { accessToken: token }));
+            res.status(CODE.OK).send(util.success(CODE.OK, MSG.LOGIN_SUCCESS, { accessToken: token,  nickname: user.nickname, gender: user.gender, image: user.image, badge: user.badge, win: user.win, lose: user.lose }));
         }
     }
 }
