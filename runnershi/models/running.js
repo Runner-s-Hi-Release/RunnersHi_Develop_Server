@@ -1,7 +1,4 @@
-const userModel = require('../models/user');
-const util = require('../modules/util');
-const status = require('../modules/statusCode');
-const msg = require('../modules/responseMessage');
+const { queryParam, queryParamArr } = require('../modules/pool');
 
 module.exports = {
 
@@ -18,14 +15,14 @@ module.exports = {
     },
 
     createRun: async(created_time, user_idx, game_idx) => {
-        const run_fields = 'created_time, user_idx, game_idx';
+        const fields = 'created_time, user_idx, game_idx';
         const questions = "?, ?, ?";
-        const run_query = `INSERT INTO run (${run_fields}) VALUES (${questions})`;
-        const run_values = [created_time, user_idx, game_idx];
+        const query = `INSERT INTO run (${fields}) VALUES (${questions})`;
+        const values = [created_time, user_idx, game_idx];
         
         try {
-            const run_result = await queryParamArr(run_query, run_values);
-            const run_idx = run_result.insertId;
+            const result = await queryParamArr(query, values);
+            const run_idx = result.insertId;
             
             return run_idx;
         }
@@ -35,7 +32,14 @@ module.exports = {
         }
     },
 
-    updateRun: async (req, res) => {
-
+    updateRun: async (run_idx, distance, time, user_idx) => {
+        const query = `UPDATE run SET distance = IF (user_idx = '${user_idx}', '${distance}', distance) time = IF (user_idx = '${user_idx}', '${time}', time) WHERE run_idx=${run_idx}`;
+        try {
+            const result = await queryParam(query);
+            return result;
+        } catch (err) {
+            console.log("updateRun Error");
+            throw(err);
+        }
     }
 }

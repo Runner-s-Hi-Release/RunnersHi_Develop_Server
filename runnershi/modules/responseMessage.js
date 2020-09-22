@@ -20,8 +20,8 @@ module.exports = {
     AUTH_SUCCESS: '인증에 성공했습니다.',
     ISSUE_SUCCESS: '새로운 토큰이 생성되었습니다.',
     
-    // 프로필 조회
-    UPDATE_PROFILE_SUCCESS: "프로필 업데이트 성공",
+    // 러닝
+    UPDATE_RUN_SUCCESS: "러닝 업데이트 성공",
     READ_PROFILE_SUCCESS: '프로필 조회 성공',
 
     // 매칭

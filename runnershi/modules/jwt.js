@@ -11,6 +11,7 @@ module.exports = {
         payload = {
             userIdx: user.user_idx,
             uuid: user.uuid,
+            gender: user.gender,
             nickname: user.nickname,
             image: user.image,
             badge: user.badge

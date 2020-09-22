@@ -10,7 +10,8 @@ const user = {
         const questions = "?, ?, ?, ?, ?";
         const badge = "000000000000";
         const image = Math.ceil(Math.random() * 9); // 1 ~ 9
-        const query = `INSERT INTO USER (${fields} VALUES ${questions})`;
+        const fields = "uuid, nickname, gender, image, badge";
+        const query = `INSERT INTO user (${fields}) VALUES (${questions})`;
         const values = [uuid, nickname, gender, image, badge];
         try {
             const result = await pool.queryParamArr(query, values);
@@ -31,7 +32,7 @@ const user = {
     },
 
     getUserByUUID: async (uuid) => {
-        const query = `SELECT * FROM USER WHERE uuid="${uuid}"`;
+        const query = `SELECT * FROM user WHERE uuid="${uuid}"`;
         try {
             return await pool.queryParam(query);
         } catch (err) {
