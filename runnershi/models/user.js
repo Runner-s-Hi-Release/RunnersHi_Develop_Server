@@ -45,7 +45,7 @@ const user = {
             else {
                 const user_idx = user_result[0].user_idx;
                 const record_query = `SELECT COUNT(if((user_idx="${user_idx}" AND (result=1 OR result=5)), 1, null)) as win, COUNT(if((user_idx="${user_idx}" AND (result=2 OR result=3)), 1, null)) as lose FROM run`;
-                const record_result = await queryParam(record_query);
+                const record_result = await pool.queryParam(record_query);
                 if (record_result.win === undefined) {
                     record_result.win = 0;
                 }
@@ -62,7 +62,7 @@ const user = {
                     win: record_result[0].win,
                     lose: record_result[0].lose
                 };
-                return final_result;
+                return [final_result];
             }
         } catch (err) {
             console.log("getUserByUUID ERROR: ", err);

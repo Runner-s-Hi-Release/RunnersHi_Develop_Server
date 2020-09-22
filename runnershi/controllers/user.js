@@ -28,7 +28,7 @@ module.exports = {
         else {
             // 등록돼있을 때
             const { token, refreshToken } = await jwt.sign(user[0]);
-            res.status(CODE.OK).send(util.success(CODE.OK, MSG.LOGIN_SUCCESS, { accessToken: token,  nickname: user.nickname, gender: user.gender, image: user.image, badge: user.badge, win: user.win, lose: user.lose }));
+            res.status(CODE.OK).send(util.success(CODE.OK, MSG.LOGIN_SUCCESS, { accessToken: token,  nickname: user[0].nickname, gender: user[0].gender, image: user[0].image, badge: user[0].badge, win: user[0].win, lose: user[0].lose }));
         }
     }
 }
