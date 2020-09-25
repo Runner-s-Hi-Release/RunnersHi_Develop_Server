@@ -44,6 +44,7 @@ module.exports = {
                 // async await 점검
                 const intervalId = setInterval(async function() {
                     counter += 1;
+                    console.log("시간: ", counter);
                     if (waitingList[waitIdx].matched) {
                         const game_idx = waitingList[waitIdx].game_idx;
                         const run_idx = await RunningModel.createRun(moment().format("YYYY-MM-DD HH:mm:ss"), user_idx, game_idx);
@@ -116,7 +117,7 @@ module.exports = {
                 const result = await RunningModel.getOpponentInfo(run_idx, user_idx);
                 console.log("OpponentInfo Result: ", result);
                 if (result.length === 1) {
-                    res.status(CODE.OK).send(util.success(CODE.OK, MSG.OPPONENT_INFO_SUCCESS, {nickname: result.nickname, win: result.win, lose: result.lose, image: result.image}));
+                    res.status(CODE.OK).send(util.success(CODE.OK, MSG.OPPONENT_INFO_SUCCESS, {nickname: result[0].nickname, win: result[0].win, lose: result[0].lose, image: result[0].image}));
                 }
                 else {
                     res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.OPPONENT_INFO_FAIL));

@@ -48,22 +48,27 @@ module.exports = {
         try {
             const user_query = `SELECT * FROM user WHERE user_idx in (SELECT user_idx FROM run WHERE game_idx in (SELECT IF (user_idx=${user_idx}, game_idx, NULL) FROM run WHERE run_idx=${run_idx}) AND run_idx<>${run_idx})`;
             const user_result = await queryParam(user_query);
-            const opponent_idx = user_result[0].user_idx;
-            const record_query = `SELECT COUNT(if((user_idx="${opponent_idx}" AND (result=1 OR result=5)), 1, null)) as win, COUNT(if((user_idx="${opponent_idx}" AND (result=2 OR result=3)), 1, null)) as lose FROM run`;
-            const record_result = await queryParam(record_query);
-            if (record_result.win === undefined) {
-                record_result.win = 0;
+            if (user_result.length === 0) {
+                return user_result;
             }
-            if (record_result.lose === undefined) {
-                record_result.lose = 0;
+            else {
+                const opponent_idx = user_result[0].user_idx;
+                const record_query = `SELECT COUNT(if((user_idx="${opponent_idx}" AND (result=1 OR result=5)), 1, null)) as win, COUNT(if((user_idx="${opponent_idx}" AND (result=2 OR result=3)), 1, null)) as lose FROM run`;
+                const record_result = await queryParam(record_query);
+                if (record_result.win === undefined) {
+                    record_result.win = 0;
+                }
+                if (record_result.lose === undefined) {
+                    record_result.lose = 0;
+                }
+                const final_result = {
+                    nickname: user_result[0].nickname,
+                    image: user_result[0].image,
+                    win: record_result[0].win,
+                    lose: record_result[0].lose
+                }
+                return [final_result];
             }
-            const final_result = {
-                nickname: user_result[0].nickname,
-                image: user_result[0].image,
-                win: record_result[0].win,
-                lose: record_result[0].lose
-            }
-            return final_result;
         } catch (err) {
             console.log("getOpponentInfo Error");
             throw(err);
