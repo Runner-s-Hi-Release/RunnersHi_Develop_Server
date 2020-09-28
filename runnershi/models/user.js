@@ -8,12 +8,13 @@ const user = {
         const people = ["지은", "태영", "가은", "유림", "예린", "수현", "세곤", "채원", "태진", "세환", "가희", "민희", "영재"];
         const gender = Math.ceil(Math.random() * 2);
         const nickname = adjective[Math.floor(Math.random() * adjective.length)] + people[Math.floor(Math.random() * people.length)];
-        const questions = "?, ?, ?, ?, ?";
+        const questions = "?, ?, ?, ?, ?, ?";
+        const level = 1;
         const badge = "000000000000";
         const image = Math.ceil(Math.random() * 9); // 1 ~ 9
-        const fields = "uuid, nickname, gender, image, badge";
+        const fields = "uuid, nickname, gender, level, image, badge";
         const query = `INSERT INTO user (${fields}) VALUES (${questions})`;
-        const values = [uuid, nickname, gender, image, badge];
+        const values = [uuid, nickname, gender, level, image, badge];
         try {
             const result = await pool.queryParamArr(query, values);
             const user = {
@@ -21,6 +22,7 @@ const user = {
                 uuid: uuid,
                 nickname: nickname,
                 gender: gender,
+                level: level,
                 image: image,
                 badge: badge,
                 win: 0,
@@ -57,6 +59,7 @@ const user = {
                     uuid: uuid,
                     nickname: user_result[0].nickname,
                     gender: user_result[0].gender,
+                    level: user_result[0].level,
                     image: user_result[0].image,
                     badge: user_result[0].badge,
                     win: record_result[0].win,
