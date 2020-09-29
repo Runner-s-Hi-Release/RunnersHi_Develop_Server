@@ -64,6 +64,7 @@ module.exports = {
                 const final_result = {
                     nickname: user_result[0].nickname,
                     image: user_result[0].image,
+                    level: user_result[0].level,
                     win: record_result[0].win,
                     lose: record_result[0].lose
                 }

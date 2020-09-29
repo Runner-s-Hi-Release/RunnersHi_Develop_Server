@@ -117,7 +117,7 @@ module.exports = {
                 const result = await RunningModel.getOpponentInfo(run_idx, user_idx);
                 console.log("OpponentInfo Result: ", result);
                 if (result.length === 1) {
-                    res.status(CODE.OK).send(util.success(CODE.OK, MSG.OPPONENT_INFO_SUCCESS, {nickname: result[0].nickname, win: result[0].win, lose: result[0].lose, image: result[0].image}));
+                    res.status(CODE.OK).send(util.success(CODE.OK, MSG.OPPONENT_INFO_SUCCESS, {level: result[0].level, nickname: result[0].nickname, win: result[0].win, lose: result[0].lose, image: result[0].image}));
                 }
                 else {
                     res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.OPPONENT_INFO_FAIL));
