@@ -48,6 +48,7 @@ module.exports = {
         try {
             const user_query = `SELECT * FROM user WHERE user_idx in (SELECT user_idx FROM run WHERE game_idx in (SELECT IF (user_idx=${user_idx}, game_idx, NULL) FROM run WHERE run_idx=${run_idx}) AND run_idx<>${run_idx})`;
             const user_result = await queryParam(user_query);
+            console.log("User Result: ", user_result);
             if (user_result.length === 0) {
                 return user_result;
             }
