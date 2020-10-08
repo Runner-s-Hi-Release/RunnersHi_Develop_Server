@@ -8,6 +8,7 @@ const TOKEN_INVALID = -2;
 const authUtil = {
     checkToken: async (req, res, next) => {
         var token = req.headers.jwt;
+        
         if (!token) {
             return res.json(util.fail(CODE.BAD_REQUEST, MSG.EMPTY_TOKEN));
         }
