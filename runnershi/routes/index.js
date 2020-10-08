@@ -9,6 +9,6 @@ router.use('/running', require('./running'));
 router.use('/ranking', require('./ranking'));
 
 //record
-//router.use('/record', require('./record'));
+router.use('/record', require('./record'));
 
 module.exports = router;

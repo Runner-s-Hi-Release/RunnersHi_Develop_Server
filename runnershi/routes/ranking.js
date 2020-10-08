@@ -5,8 +5,7 @@ const rankingController = require('../controllers/rankingController');
 const auth = require("../middlewares/auth");
 
 //DB생각해보기 --> cache 사용, mongo DB
-// join 연산이 많으면 좋지 않다.. -> 하지만, 지금 구조상 join연산이 상당히 많이 들어감. 서비스 규모가 커지면 
-//cache는 어떻게 사용하는 거지??
+//join 연산이 많으면 좋지 않다.. -> 수정방안 고민
 //Docker , swagger 사용
 
   router.get('/runners', auth.checkToken, rankingController.runner);

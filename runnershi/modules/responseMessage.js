@@ -40,6 +40,9 @@ module.exports = {
     WINNER_SUCCESS: "이달의 위너 조회 성공",
     LOSER_SUCCESS: "이달의 루저 조회 성공",
 
+    //record
+    RECORD_ALL_SUCCESS: "모든 기록 조회 성공",
+
     //userIdx 잘못 들어왔을 경우,
     NO_EXIST_USERIDX: "USER_IDX가 존재하지 않습니다.",
     RUNNER_DETAIL_PROFILE_SUCCESS: "러너 프로필 조회 성공",
