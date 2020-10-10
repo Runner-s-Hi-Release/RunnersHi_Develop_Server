@@ -33,6 +33,38 @@ const record = {
     return await pool.queryParam(query);
   },
 
+  getUserRecordDetail: async(user_idx, run_idx) => {
+    const query = 
+    `SELECT 
+      r.distance, 
+      r.time,
+      TIMEDIFF(r.end_time, r.created_time) as time_diff, 
+      r.result
+    FROM 
+      run r
+    WHERE 
+      r.user_idx = "${user_idx}" 
+    AND 
+      r.run_idx = "${run_idx}"`;
+
+    const data = await pool.queryParam(query);
+    const pace_data = await record.getPace(data[0].time, data[0].distance);
+    
+    let result_data=2;
+    if( data[0].result === 1 || data[0].result === 5 )
+      result_data = 1;
+
+      const final_data = {
+        distance: data[0].distance,
+        time: data[0].time_diff,
+        pace_minute: pace_data.pace_minute,
+        pace_second: pace_data.pace_second,
+        result: result_data
+       };
+       
+      return final_data;
+  },
+
   getOpponentRecord: async(user_idx, game_idx) => {
     const query = 
     `
@@ -111,39 +143,6 @@ const record = {
     return result;
   },
 
-  getUserIdxRunIdxRecord: async(user_idx, run_idx) => {
-    const query = 
-    `SELECT 
-      r.distance, 
-      r.time,
-      TIMEDIFF(r.end_time, r.created_time) as time_diff, 
-      r.result
-    FROM 
-      run r
-    WHERE 
-      r.user_idx = "${user_idx}" 
-    AND 
-      r.run_idx = "${run_idx}"`;
-
-    const data = await pool.queryParam(query);
-
-    const pace_data = await record.getPace(data[0].time, data[0].distance);
-    
-    let result_data=2;
-    if( data[0].result === 1 || data[0].result === 5 )
-      result_data = 1;
-
-      const final_data = {
-        distance: data[0].distance,
-        time: data[0].time_diff,
-        pace_minute: pace_data.pace_minute,
-        pace_second: pace_data.pace_second,
-        result: result_data
-       };
-       
-      return {code: "USER_RECORD_SUCCESS", result: final_data};
-  },
-
   getBadge: async(user_idx) => {
     const query = `
     SELECT 
@@ -175,7 +174,6 @@ const record = {
     `
     SELECT 
       r.distance, r.time,
-      TIMEDIFF(r.end_time, r.created_time) as time_diff,  
       r.result, r.game_idx,
       SUBSTR(r.created_time, 1, 10) as created_time
     FROM 
@@ -187,11 +185,7 @@ const record = {
     limit 1`;
 
     const data = await pool.queryParam(query);
-
-    if(data.length === 0) {
-      return "ACCESS_NON_DATA_FOR_IDX";
-    }
-
+    
     let result_num = 2;
     if(data[0].result === 1 || data[0].result === 5) {
       result_num = 1;

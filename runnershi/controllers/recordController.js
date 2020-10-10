@@ -42,7 +42,7 @@ const record = {
       const data = await recordModel.getDetailRecord(user_idx, run_idx);
       const coordinateData = await recordModel.getCoordinate(run_idx);
       const opponetData = await recordModel.getOpponentRecord(user_idx, game_idx);
-      const runningData = await recordModel.getPace();
+      const runningData = await recordModel.getUserRecordDetail(user_idx, run_idx);
 
       if(data.length === 0) {
         return res.status(statusCode.NO_CONTENT).send(util.success(statusCode.NO_CONTENT, resMessage.NO_DATA, final_data));
@@ -68,14 +68,6 @@ const record = {
 
   getUserRecentRecord: async(req, res, next) => {
    
-  },
-
-  getUserRunIdxRecord: async(req, res, next) => {
- 
-  },
-
-  getOpponentRecord: async(req, res, next) => {
- 
   }
 
 };

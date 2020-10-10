@@ -91,14 +91,19 @@ const ranking = {
 
     try{
       const user_data = await rankingModel.getDetailProfile(user_idx);
-      //const recentrecord = await recordModel.getUserRecentRecord(user_idx);
+      const recentrecord = await recordModel.getUserRecentRecord(user_idx);
       //const badge = await recordModel.getBadge(user_idx);
       //const pace_data = await recordModel.getPace(recentrecord[0].time, recentrecord[0].distance);
 
       //if(recentrecord === null || badge === null || pace_data == null) 
       //  return next("WRONG_PARM");
 
-      return res.status(statusCode.OK).send(util.success(statusCode.OK, resMessage.RUNNER_DETAIL_PROFILE_SUCCESS, user_data));
+      const real_result = {
+        info: user_data,
+        recent_record: recentrecord[0]
+      }; 
+
+      return res.status(statusCode.OK).send(util.success(statusCode.OK, resMessage.RUNNER_DETAIL_PROFILE_SUCCESS, real_result));
     } catch(error){
       throw(error);
     }
