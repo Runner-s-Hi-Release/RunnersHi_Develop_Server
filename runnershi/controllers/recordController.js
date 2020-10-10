@@ -33,22 +33,32 @@ const record = {
   getDetailRecord: async(req, res, next) => {
     const run_idx = req.params.run_idx;
     const user_idx = req.decoded.userIdx;
+    const game_idx = req.params.game_idx;
 
     try{
+      if(run_idx === undefined)
+        return res.status(statusCode.BAD_REQUEST).send(util.fail(statusCode.NO_CONTENT, resMessage.NOT_FIND_IDX_ERROR));
+
       const data = await recordModel.getDetailRecord(user_idx, run_idx);
       const coordinateData = await recordModel.getCoordinate(run_idx);
+      const opponetData = await recordModel.getOpponentRecord(user_idx, game_idx);
+      const runningData = await recordModel.getPace();
+
+      if(data.length === 0) {
+        return res.status(statusCode.NO_CONTENT).send(util.success(statusCode.NO_CONTENT, resMessage.NO_DATA, final_data));
+      }
 
       const real_result = {
-        month: data[0].month,
-        day: data[0].day,
-        time : data[0].time,
-        start_time: data[0].create_time,
+        created_time: data[0].created_time,
         end_time: data[0].end_time,
+        opponent_data: opponetData,
+        user_running_data: runningData,
         coordinate: coordinateData
-      };
-      return next({code: "RECORD_DETAIL_SUCCESS", result: real_result});
+      }; 
+
+      return res.status(statusCode.OK).send(util.success(statusCode.OK, resMessage.RECORD_DETAIL_SUCCESS, real_result));
     } catch(error){
-      return next(error);
+      throw(error);
     }
   },
   

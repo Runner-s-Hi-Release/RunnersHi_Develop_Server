@@ -8,7 +8,7 @@ const auth = require("../middlewares/auth");
 
   // all 페이징처리하기 
   router.get('/all', auth.checkToken, recordController.getAllRecords);
-  router.get('/detail/:run_idx', auth.checkToken, recordController.getDetailRecord);
+  router.get('/detail/:run_idx/:game_idx', auth.checkToken, recordController.getDetailRecord);
   // router.get('/opponent/:game_idx', auth.checkToken, recordController.getOpponentRecord);
   // router.get('/badge', auth.checkToken, recordController.getBadge);
   // router.get('/recent', auth.checkToken, recordController.getUserRecentRecord);

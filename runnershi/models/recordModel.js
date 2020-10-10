@@ -19,14 +19,78 @@ const record = {
     return await pool.queryParam(query);
   },
   
+  getDetailRecord: async(user_idx, run_idx) => {
+   
+    const query = 
+    `
+    SELECT 
+      created_time, end_time
+    FROM 
+      run r
+    WHERE 
+      user_idx = "${user_idx}" AND run_idx = "${run_idx}"`;
+
+    return await pool.queryParam(query);
+  },
+
+  getOpponentRecord: async(user_idx, game_idx) => {
+    const query = 
+    `
+    SELECT 
+     r.distance, r.time, r.user_idx, 
+     TIMEDIFF(r.end_time, r.created_time) as diff_time
+    FROM 
+     run r
+    WHERE 
+     r.game_idx = "${game_idx}"
+    AND 
+     r.user_idx != "${user_idx}"
+    `;
+
+    const data = await pool.queryParam(query);
+    const user_nickname = await record.getUserNickname(data[0].user_idx);
+    const pace_data = await record.getPace(data[0].time, data[0].distance);
+
+    let final_data = [];
+    final_data = {
+     nickname: user_nickname[0].nickname,
+     distance: data[0].distance,
+     time: data[0].diff_time,
+     pace_minute: pace_data.pace_minute,
+     pace_second: pace_data.pace_second
+    }
+
+    return final_data;
+ },
+
+  getCoordinate: async (run_idx) => {
+    const coordinate =  
+    `SELECT 
+      latitude, longitude 
+    FROM 
+      coordinate
+    WHERE 
+      run_idx =  "${run_idx}"`;
+
+    return await pool.queryParam(coordinate);
+  },
+
+  getUserNickname: async (user_idx) => {
+    const query = 
+    `
+    SELECT nickname FROM user WHERE user_idx = "${user_idx}"
+    `;
+
+    return await pool.queryParam(query);
+  },
+
   getUserData: async (user_idx) => {
     const query = 
     `
     SELECT * FROM user WHERE user_idx = "${user_idx}"
     `;
 
-    const userData = await pool.queryParam(query);
-    return userData;
+    return await pool.queryParam(query);
   },
 
   getPace: async (time, distance) => {
@@ -47,40 +111,6 @@ const record = {
     return result;
   },
 
-  getCoordinate: async (run_idx) => {
-    const coordinate =  
-    `SELECT 
-      latitude, longitude 
-    FROM 
-      coordinate
-    WHERE 
-      run_idx =  "${run_idx}"`;
-
-    let coordiData = await pool.queryParam(coordinate);
-
-    if(coordiData.length === 0)
-      return "WRONG_PARM";
-
-    return coordiData;
-  },
-
-  getDetailRecord: async(user_idx, run_idx) => {
-   
-    const query = 
-    `SELECT 
-      MONTH(created_time) as month,
-      DAY(created_time) as day,
-      TIMEDIFF(r.end_time, r.created_time) as time,
-      TIME(created_time) as create_time,
-      TIME(end_time) as end_time
-    FROM 
-      run r
-    WHERE 
-      user_idx = "${user_idx}" AND run_idx = "${run_idx}"`;
-
-    return await pool.queryParam(query);
-  },
-
   getUserIdxRunIdxRecord: async(user_idx, run_idx) => {
     const query = 
     `SELECT 
@@ -96,10 +126,6 @@ const record = {
       r.run_idx = "${run_idx}"`;
 
     const data = await pool.queryParam(query);
-
-    if(data.length === 0) {
-      return "WRONG_PARM";
-    }
 
     const pace_data = await record.getPace(data[0].time, data[0].distance);
     
@@ -175,49 +201,16 @@ const record = {
     return data;
   },
 
-  getOpponentRecord: async(user_idx, game_idx) => {
-     const query = 
-     `
-     SELECT 
-      r.distance, r.time, r.user_idx,
-      TIMEDIFF(r.end_time, r.created_time) as diff_time
-     FROM 
-      run r
-     WHERE 
-      r.game_idx = "${game_idx}"
-     AND 
-      r.user_idx != "${user_idx}"`;
-
-     const data = await pool.queryParam(query);
-
-    if(data.length === 0) {
-      return {"code" : "NO_OPPONENT", result : {}};
-    } 
-
-    const query_nickname = 
-    `
-    SELECT nickname FROM user 
-    WHERE user_idx = "${data[0].user_idx}"`;
-
-    const user_nickname = await pool.queryParam(query_nickname);
-    const pace_data = await record.getPace(data[0].time, data[0].distance);
-
-    let final_data = [];
-
-    final_data = {
-      nickname: user_nickname[0].nickname,
-      distance: data[0].distance,
-      time: data[0].diff_time,
-      pace_minute: pace_data.pace_minute,
-      pace_second: pace_data.pace_second
-    }
-
-      return {code : "OPPONENT_RECORD_SUCCESS", result : final_data};
-  },
-
   getRecentRecordByTime: async(user_idx, time)=>{
-    const query = `SELECT distance, TIMEDIFF(r.end_time, r.created_time) as time, (r.time / 60) / (r.distance / 1000) as pace
-    FROM run r WHERE user_idx = ? AND time = ? ORDER BY run_idx DESC LIMIT 1`;
+    const query = `
+    SELECT 
+      distance, TIMEDIFF(r.end_time, r.created_time) as time, (r.time / 60) / (r.distance / 1000) as pace
+    FROM 
+      run r 
+    WHERE 
+      user_idx = ? AND time = ? 
+    ORDER BY 
+      run_idx DESC LIMIT 1`;
     const rows = await pool.queryParamArr(query, [user_idx, time]);
     if(rows.length === 0) return false;
     else return rows[0];
@@ -235,7 +228,6 @@ const record = {
     "150시간 러닝을 달성하신\n러너에게 드리는 뱃지입니다", "10일 연속 러닝을 하신\n러너에게 드리는 뱃지입니다",
     "연속 5승을 하신\n러너에게 드리는 뱃지입니다", "연속 10승을 하신\n러너에게 드리는 뱃지입니다"];
 
-
     const littleContents = ["알을 깨고 나오셨군요!", "러닝 병아리로 거듭나셨네요!", "오늘 저녁은 치킨이닭!",
     "최고 페이스 날짜", "최장 거리 날짜", "최저 페이스 날짜",
     "티끌모아 태산이에요\n100시간이 코 앞이에요", "당신은 아무래도\n좀 달릴 줄 아는 러너인 것 같군요", "150시간의 러닝을 통해\n더욱 건강해진 것을 축하해요",
@@ -251,8 +243,9 @@ const record = {
     if(flag === 3 || flag === 4 || flag === 5){
 
       let query =
-          `SELECT r.distance, ((r.time / 60) / (r.distance / 1000)) as pace, SUBSTR(r.created_time, 1, 10) as created_time, time
-     FROM run r
+        `SELECT 
+          r.distance, ((r.time / 60) / (r.distance / 1000)) as pace, SUBSTR(r.created_time, 1, 10) as created_time, time
+        FROM run r
      WHERE user_idx = ? AND ((r.time / 60) / (r.distance / 1000)) < 60
      ORDER BY `;
 
@@ -281,12 +274,11 @@ const record = {
       }
     }
     return ({"code" : "BADGE_DETAIL", result : result});
-
   },
 
   updateBadge: async(user_idx, badgeFlag)=>{
     const query = `UPDATE user SET badge = ? WHERE user_idx = ?`;
-    await pool.queryParamArr(query, [badgeFlag, user_idx]);
+    return await pool.queryParamArr(query, [badgeFlag, user_idx]);
   },
   
   updateBadgeByWin: async(user_idx, win)=>{
