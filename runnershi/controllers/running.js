@@ -29,7 +29,7 @@ module.exports = {
                     return true;
                 }
             });
-            console.log(opponentIdx);
+            
             if (opponentIdx === -1) {
                 let counter = 0;
                 const waitIdx = waitingList.push({
