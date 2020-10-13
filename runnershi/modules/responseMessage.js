@@ -32,5 +32,25 @@ module.exports = {
     MATCH_SUCCESS: "상대 러너와 매칭 성공",
     MATCH_TIMEOUT: "매칭 시간 초과",
 
+    //데이터 없을 때
+    NO_DATA: "통신 성공 BUT DATA 없음",
+
+    //ranking
+    RUNNER_SUCCESS: "이달의 러너 조회 성공",
+    WINNER_SUCCESS: "이달의 위너 조회 성공",
+    LOSER_SUCCESS: "이달의 루저 조회 성공",
+
+    //record
+    RECORD_ALL_SUCCESS: "모든 기록 조회 성공",
+    RECORD_DETAIL_SUCCESS: "기록 Detail 조회 성공",
+
+    //userIdx 잘못 들어왔을 경우,
+    NO_EXIST_USERIDX: "USER_IDX가 존재하지 않습니다.",
+    RUNNER_DETAIL_PROFILE_SUCCESS: "러너 프로필 조회 성공",
+
+    //
+    NOT_FIND_IDX_ERROR: "파라미터가 잘못되었습니다.",
+    
+
     DB_ERROR: 'DB 오류'
 };
