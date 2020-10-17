@@ -1,7 +1,7 @@
 FROM node
 
 WORKDIR /src
-COPY . /src
+COPY ./runnershi /src
 
 RUN cd /src && npm install
 
