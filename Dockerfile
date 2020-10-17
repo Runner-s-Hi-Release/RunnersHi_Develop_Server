@@ -1,4 +1,4 @@
-FROM node
+FROM node:alpine
 
 WORKDIR /src
 COPY ./runnershi /src
@@ -9,4 +9,4 @@ RUN npm install -g pm2
 
 EXPOSE 3000
 
-CMD ["pm2", "start", "./bin/www"]
+CMD ["pm2-runtime", "start", "./bin/www"]
