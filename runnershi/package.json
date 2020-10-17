@@ -24,13 +24,8 @@
     "pbkdf2": "^3.0.17",
     "pool": "^0.4.1",
     "promise-mysql": "^4.1.3",
-<<<<<<< HEAD
-    "pug": "^3.0.0",
-    "sequelize": "^6.3.5"
-=======
-    "secret-key": "^1.4.3",
-    "secretkey": "0.0.1"
->>>>>>> b8bf44ab60dcf3a35080901705d84e54b74a3be0
+    "sequelize": "^6.3.5",
+    "secret-key": "^1.4.3"
   },
   "main": "app.js",
   "author": "",
