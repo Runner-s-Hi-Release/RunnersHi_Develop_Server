@@ -12,6 +12,7 @@ module.exports = {
             userIdx: user.user_idx,
             uuid: user.uuid,
             gender: user.gender,
+            level: user.level,
             nickname: user.nickname,
             image: user.image,
             badge: user.badge

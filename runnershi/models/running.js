@@ -4,11 +4,10 @@ module.exports = {
 
     insertGame: async() => {
         try {
-            let query = "INSERT INTO game (game_idx) VALUES (0)";
+            const query = "INSERT INTO game (game_idx) VALUES (0)";
             const result = await queryParam(query);
             return result.insertId;
-        }
-        catch (err) {
+        } catch (err) {
             console.log("insertGame Error");
             throw (err);
         }
@@ -25,8 +24,7 @@ module.exports = {
             const run_idx = result.insertId;
             
             return run_idx;
-        }
-        catch (err) {
+        } catch (err) {
             console.log("createRun Error");
             throw (err);
         }

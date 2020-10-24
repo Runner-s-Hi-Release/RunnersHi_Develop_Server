@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const auth = require("../middlewares/auth");
-const runningController = require("../controllers/running");
+const runningController = require("../controllers/runningController");
 
 /* GET users listing. */
 router.post('/match', auth.checkToken, runningController.startMatching);
