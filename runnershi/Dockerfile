@@ -1,7 +1,7 @@
 FROM node:alpine
 
 WORKDIR /src
-COPY ./runnershi /src
+COPY . /src
 
 RUN cd /src && npm install
 

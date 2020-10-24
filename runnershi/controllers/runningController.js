@@ -8,63 +8,29 @@ const moment = require('moment');
 require('moment-timezone'); 
 moment.tz.setDefault("Asia/Seoul");
 
-let waitingList = [];
-
 module.exports = {
     startMatching: async (req, res) => {
         try {
             const {time, wantGender} = req.body;
+            console.log(req.decoded);
             const user_idx = req.decoded.userIdx;
             const gender = req.decoded.gender;
+            const image = req.decoded.image;
+            const level = req.decoded.level;
+            const nickname = req.decoded.nickname;
+
             if (!time || !wantGender) {
                 res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NULL_VALUE));
                 return;
             }
-            if (!user_idx || !gender) {
+            if (!user_idx || !gender || !image || !level || !nickname) {
                 res.status(CODE.DB_ERROR).send(util.fail(CODE.DB_ERROR, MSG.READ_FAIL));
                 return;
             }
-            const opponentIdx = waitingList.findIndex((awaiter) => {
-                if (awaiter.time === time && (awaiter.wantGender === 3 || awaiter.wantGender === gender) && (awaiter.gender === wantGender || wantGender === 3) && !awaiter.matched) {
-                    return true;
-                }
-            });
-            
-            if (opponentIdx === -1) {
-                let counter = 0;
-                const waitIdx = waitingList.push({
-                    time: time,
-                    wantGender: wantGender,
-                    gender: gender,
-                    user_idx: user_idx,
-                    matched: false
-                }) - 1;
-                console.log("waitIdx: ", waitIdx);
-
-                // async await 점검
-                const intervalId = setInterval(async function() {
-                    counter += 1;
-                    console.log("시간: ", counter);
-                    if (waitingList[waitIdx].matched) {
-                        const game_idx = waitingList[waitIdx].game_idx;
-                        const run_idx = await RunningModel.createRun(moment().format("YYYY-MM-DD HH:mm:ss"), user_idx, game_idx);
-                        waitingList.splice(waitIdx, 1);
-                        clearInterval(intervalId);
-                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS, {run_idx: run_idx}));
-                    }
-                    else if (counter > 180) {
-                        waitingList.splice(waitIdx, 1);
-                        clearInterval(intervalId);
-                        res.status(CODE.REQUEST_TIMEOUT).send(util.fail(CODE.REQUEST_TIMEOUT, MSG.MATCH_TIMEOUT));
-                    }
-                }, 1000);
-            }
             else {
-                const game_idx = await RunningModel.insertGame();
-                waitingList[opponentIdx].game_idx = game_idx;
-                waitingList[opponentIdx].matched = true;
-                const run_idx = await RunningModel.createRun(moment().format("YYYY-MM-DD HH:mm:ss"), user_idx, game_idx);
-                res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS, {run_idx: run_idx}));
+                const result = await RunningModel.findMatch(time, level, nickname, gender, image, wantGender);
+                console.log(result);
+                res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_WAITING));
             }
         } catch (err) {
             console.log("startMatching Error");
