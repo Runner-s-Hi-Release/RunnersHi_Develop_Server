@@ -1,5 +1,6 @@
 const { queryParam, queryParamArr } = require('../modules/pool');
 
+
 module.exports = {
 
     insertGame: async() => {
@@ -22,7 +23,6 @@ module.exports = {
         try {
             const result = await queryParamArr(query, values);
             const run_idx = result.insertId;
-            
             return run_idx;
         } catch (err) {
             console.log("createRun Error");
