@@ -29,6 +29,7 @@ module.exports = {
     OPPONENT_INFO_FAIL: "상대방 정보 조회 실패",
 
     // 매칭
+    AWAIT_SUCCESS: "대기열 추가 성공",
     MATCH_WAITING: "매칭 대기 중",
     MATCH_SUCCESS: "상대 러너와 매칭 성공",
     MATCH_TIMEOUT: "매칭 시간 초과",

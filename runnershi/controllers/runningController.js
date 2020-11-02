@@ -1,21 +1,13 @@
-const RunningModel = require('../models/running');
+const RunningModel = require('../models/runningModel');
 const util = require('../modules/util');
 const CODE = require('../modules/statusCode');
 const MSG = require('../modules/responseMessage');
 const encrypt = require('../modules/crypto');
 const jwt = require('../modules/jwt');
 const moment = require('moment');
-const redis = require('redis');
-const client = redis.createClient();
 
 require('moment-timezone'); 
 moment.tz.setDefault("Asia/Seoul");
-
-client.on('error', function(error) {
-    console.error(error);
-});
-
-waitingList = [];
 
 module.exports = {
     startMatching: async (req, res) => {
@@ -25,12 +17,9 @@ module.exports = {
             const user_idx = req.decoded.userIdx;
             const gender = req.decoded.gender;
             const level = req.decoded.level;
+            const image = req.decoded.image;
+            const nickname = req.decoded.nickname;
 
-            client.hmset('fruit', {
-                lemon: 5000,
-                green: 200
-            });
-            
             if (!time || !wantGender) {
                 res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NULL_VALUE));
                 return;
@@ -39,45 +28,22 @@ module.exports = {
                 res.status(CODE.DB_ERROR).send(util.fail(CODE.DB_ERROR, MSG.READ_FAIL));
                 return;
             }
-            const opponentIdx = waitingList.findIndex((awaiter) => {
-                if (awaiter.time === time && awaiter.level === level && (awaiter.wantGender === 3 || awaiter.wantGender === gender) && (awaiter.gender === wantGender || wantGender === 3) && !awaiter.matched) {
-                    return true;
-                }
-            });
-            
-            if (opponentIdx === -1) {
-                waitingList.push({
-                    time: time,
-                    wantGender: wantGender,
-                    gender: gender,
-                    user_idx: user_idx,
-                    matched: false
-                });
-                // async await 점검
-                const intervalId = setInterval(async function() {
-                    if (waitingList[waitIdx].matched) {
-                        const game_idx = waitingList[waitIdx].game_idx;
-                        const run_idx = await RunningModel.createRun(moment().format("YYYY-MM-DD HH:mm:ss"), user_idx, game_idx);
-                        waitingList.splice(waitIdx, 1);
-                        clearInterval(intervalId);
-                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS, {run_idx: run_idx}));
-                    }
-                    else if (counter > 180) {
-                        waitingList.splice(waitIdx, 1);
-                        clearInterval(intervalId);
-                        res.status(CODE.REQUEST_TIMEOUT).send(util.fail(CODE.REQUEST_TIMEOUT, MSG.MATCH_TIMEOUT));
-                    }
-                }, 1000);
-            }
             else {
-                const game_idx = await RunningModel.insertGame();
-                waitingList[opponentIdx].game_idx = game_idx;
-                waitingList[opponentIdx].matched = true;
-                const run_idx = await RunningModel.createRun(moment().format("YYYY-MM-DD HH:mm:ss"), user_idx, game_idx);
-                res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS, {run_idx: run_idx}));
+                const result = await RunningModel.startMatching(user_idx, time, wantGender, gender, level, nickname, image);
+                res.status(CODE.OK).send(util.success(CODE.OK, MSG.AWAIT_SUCCESS));
             }
+
         } catch (err) {
             console.log("startMatching Error");
+            throw(err);
+        }
+    },
+
+    checkMatching: async (req, res) => {
+        try {
+            const user_idx = req.decoded.userIdx;
+        } catch (err) {
+            console.log("checkMatching Error");
             throw(err);
         }
     },
