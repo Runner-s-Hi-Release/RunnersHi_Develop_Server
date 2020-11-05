@@ -9,10 +9,18 @@ const moment = require('moment');
 require('moment-timezone'); 
 moment.tz.setDefault("Asia/Seoul");
 
+let awaiters = {};
+
 module.exports = {
     startMatching: async (req, res) => {
         try {
-            const {time, wantGender} = req.body;
+            let {time, wantGender} = req.body;
+            if (wantGender === 3) {
+                wantGender = [1, 2];
+            }
+            else {
+                wantGender = [wantGender];
+            }
             console.log(req.decoded);
             const user_idx = req.decoded.userIdx;
             const gender = req.decoded.gender;
@@ -29,7 +37,7 @@ module.exports = {
                 return;
             }
             else {
-                const result = await RunningModel.startMatching(user_idx, time, wantGender, gender, level, nickname, image);
+                awaiters[user_idx] = {user_idx: user_idx, time: time, wantGender: wantGender, gender: gender, level: level, nickname: nickname, image: image, matched: 0, confirmCount: 0}
                 res.status(CODE.OK).send(util.success(CODE.OK, MSG.AWAIT_SUCCESS));
             }
 
@@ -39,11 +47,90 @@ module.exports = {
         }
     },
 
-    checkMatching: async (req, res) => {
+    findMatching: async (req, res) => {
         try {
             const user_idx = req.decoded.userIdx;
+            if (!user_idx) {
+                res.status(CODE.DB_ERROR).send(util.fail(CODE.DB_ERROR, MSG.READ_FAIL));
+                return;
+            }
+            else {
+                if (!(user_idx in awaiters)) {
+                    res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NOT_WAITING));
+                    return;
+                }
+                else {
+                    const {time, wantGender, gender, level, matched} = awaiters[user_idx];
+                    if (matched !== 0) {
+                        res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.ALREADY_FOUND));
+                        return;
+                    }
+                    else {
+                        const candidate = Object.values(awaiters).find(awaiter => awaiter.matched === user_idx)
+                        if (candidate === undefined) {
+                            const opponent = Object.values(awaiters).find(opponent => (opponent.time === time) && (opponent.level === level) && (opponent.wantGender.includes(gender)) && (wantGender.includes(opponent.gender)));
+                            if (opponent === undefined) {
+                                res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_WAITING));
+                                return;
+                            }
+                            else {
+                                awaiters[user_idx].matched = opponent.user_idx;
+                                res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS));
+                                return;
+                            }
+                        }
+                        else {
+                            awaiters[user_idx].matched = candidate.user_idx;
+                            res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS));
+                            return;
+                        }
+                    }
+                }
+            }
         } catch (err) {
-            console.log("checkMatching Error");
+            console.log("findMatching Error");
+            throw(err);
+        }
+    },
+
+    confirmMatching: async (req, res) => {
+        try {
+            const user_idx = req.decoded.userIdx;
+            if (!user_idx) {
+                res.status(CODE.DB_ERROR).send(util.fail(CODE.DB_ERROR, MSG.READ_FAIL));
+                return;
+            }
+            else if (!(user_idx in awaiters)) {
+                res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NOT_WAITING));
+                return;
+            }
+            else {
+                awaiters[user_idx].confirmCount += 1
+                const opponent = awaiters[awaiters[user_idx].matched]
+                if (opponent === undefined) {
+                    awaiters[user_idx].matched = 0
+                    console.log("상대방 없음");
+                    res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NO_OPPONENT));
+                    return;
+                }
+                else if (opponent.confirmCount === 0) {
+                    if (awaiters[user_idx].confirmCount === 5) {
+                        delete awaiters[awaiters[user_idx].matched]
+                        awaiters[user_idx].matched = 0;
+                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.OPPONENT_DISCONNECT))
+                    }
+                    else {
+                        res.status(CODE.OK).send(util.success(CODE.BAD_REQUEST, MSG.CONFIRM_WAITING));
+                        return;
+                    }
+                }
+                else {
+                    res.status(CODE.OK).send(util.success(CODE.OK, MSG.CONFIRM_SUCCESS, {opponent_level: opponent.level, opponent_nickname: opponent.nickname, opponent_image: opponent.image, opponent_win: }))
+                    return;
+                }
+            }
+        } catch (err) {
+            console.log("confirmMatching Error");
             throw(err);
         }
     },

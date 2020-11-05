@@ -30,9 +30,14 @@ module.exports = {
 
     // 매칭
     AWAIT_SUCCESS: "대기열 추가 성공",
+    ALREADY_FOUND: "이미 매칭 상대를 발견했습니다",
+    NOT_WAITING: "해당 유저가 대기열에 없습니다",
+    NO_OPPONENT: "상대 러너가 대기열에서 이탈했습니다",
     MATCH_WAITING: "매칭 대기 중",
     MATCH_SUCCESS: "상대 러너와 매칭 성공",
-    MATCH_TIMEOUT: "매칭 시간 초과",
+    OPPONENT_DISCONNET: "상대방과의 연결이 끊어졌습니다",
+    CONFIRM_WAITING: "상대 러너의 승인 대기 중",
+    CONFIRM_SUCCESS: "러닝 승인 성공",
 
     //데이터 없을 때
     NO_DATA: "통신 성공 BUT DATA 없음",
