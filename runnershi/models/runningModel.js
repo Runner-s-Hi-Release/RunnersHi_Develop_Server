@@ -13,83 +13,50 @@ const { queryParam, queryParamArr } = require('../modules/pool');
 //   }
 
 module.exports = {
-
-    insertGame: async() => {
+    getOpponentRecord: async (user_idx) => {
         try {
-            const query = "INSERT INTO game (game_idx) VALUES (0)";
+            const query = `SELECT COUNT(IF((user_idx=${user_idx} AND result=1), 1, null)) AS win, COUNT(IF((user_idx=${user_idx} AND (result=2)), 1, null)) AS lose FROM run`;
+            console.log(query);
+            const result = await queryParam(query);
+            if (result.win === undefined) {
+                result.win = 0;
+            }
+            if (result.lose === undefined) {
+                result.lose = 0;
+            }
+            return result;
+        } catch (err) {
+            console.log("getOpponentRecord Error from runningModel");
+            throw(err);
+        }
+    },
+
+    insertGame: async(time) => {
+        try {
+            let query = `INSERT INTO game (game_idx, time) VALUES (0, ${time})`;
             const result = await queryParam(query);
             return result.insertId;
-        } catch (err) {
-            console.log("insertGame Error");
+        }
+        catch (err) {
+            console.log("insertGame Error from runningModel");
             throw (err);
         }
     },
 
-    startMatching: async(user_idx, time, wantGender, gender, level, nickname, image) => {
-        try {
-            const fields = 'user_idx, time, wantGender, gender, level, nickname, image, matched';
-            const questions = '?, ?, ?, ?, ?, ?, ?, ?';
-            const values = [user_idx, time, wantGender, gender, level, nickname, image, 0];
-            const insert_query = `INSERT INTO awaiter (${fields}) VALUES (${questions}) ON DUPLICATE KEY UPDATE time=${time}, wantGender=${wantGender}, gender=${gender}, level=${level}, nickname="${nickname}", image=${image}, matched=0`;
-            const insert_result = await queryParamArr(insert_query, values);
-            console.log("INSERT RESULT: ", insert_result);
-            return insert_result;
-        } catch (err) {
-            console.log("startMatching Error");
-            throw(err);
-        }
-    },
-
-    findMatching: async(user_idx) => {
-        try {
-            const awaiter_query = `SELECT * FROM awaiter WHERE user_idx=${user_idx}`;
-            const awaiter_info = await queryParam(awaiter_query);
-            const {time, wantGender, gender, level, nickname, image} = awaiter_info[0];
-            const opponent_query = `SELECT user_idx FROM awaiter WHERE time=${time} AND (wantGender=3 OR wantGender=${gender}) AND (${wantGender}=3 OR ${wantGender}=gender) AND level=${level} LIMIT 1`;
-            const opponent_result = await queryParam(opponent_query);
-            console.log("OPPONENT RESULT: ", opponent_result);
-            if (opponent_result.length === 0) {
-                return 'NOT FOUND';
-            }
-            else {
-                const update_query = `UPDATE awaiter SET matched=${opponent_result[0].user_idx} WHERE user_idx=${user_idx}`;
-                const update_result = await queryParam(update_query);
-                if (update_result.changedRows === 1) {
-                    return 'FOUND';
-                }
-                else {
-                    return 'SOMETHING WENT WRONG';
-                }
-            }
-        } catch (err) {
-            console.log("findMatching Error");
-            throw(err);
-        }
-    },
-
-    confirmMatching: async(user_idx) => {
-        try {
-            const query = `SELECT * FROM awaiter WHERE user_idx IN (SELECT matched FROM awaiter WHERE user_idx=${user_idx})`;
-            const result = await queryParam(query);
-            return result;
-        } catch (err) {
-            console.log("confirmMatching Error");
-            throw(err);
-        }
-    },
-
-    createRun: async(created_time, user_idx, game_idx) => {
-        const fields = 'created_time, user_idx, game_idx';
+    insertRun: async(created_time, game_idx, user_idx) => {
+        const fields = 'created_time, game_idx, user_idx';
         const questions = "?, ?, ?";
         const query = `INSERT INTO run (${fields}) VALUES (${questions})`;
-        const values = [created_time, user_idx, game_idx];
+        const values = [created_time, game_idx, user_idx];
         
         try {
             const result = await queryParamArr(query, values);
             const run_idx = result.insertId;
+            
             return run_idx;
-        } catch (err) {
-            console.log("createRun Error");
+        }
+        catch (err) {
+            console.log("createRun Error from runningModel");
             throw (err);
         }
     },
@@ -100,7 +67,7 @@ module.exports = {
             const result = await queryParam(query);
             return result;
         } catch (err) {
-            console.log("updateRun Error");
+            console.log("updateRun Error from runningModel");
             throw(err);
         }
     },
@@ -134,18 +101,92 @@ module.exports = {
                 return [final_result];
             }
         } catch (err) {
-            console.log("getOpponentInfo Error");
+            console.log("getOpponentInfo Error from runningModel");
             throw(err);
         }
     },
 
-    getOpponentRun: async (run_idx, user_idx) => {
-        const query = `SELECT * FROM run WHERE game_idx in (SELECT IF (user_idx=${user_idx}, game_idx, NULL) FROM run WHERE run_idx=${run_idx}) AND run_idx<>${run_idx}`;
+    getRanking: async (run_idx_str) => {
+        const run_idx = parseInt(run_idx_str, 10);
+        const query = `SELECT * FROM run WHERE game_idx in (SELECT game_idx FROM run WHERE run_idx=${run_idx})`;
         try {
+            const result = await queryParam(query);
+            const user = result.find(element => element.run_idx === run_idx);
+            const opponent = result.find(element => element.run_idx !== run_idx);
+            if (user === undefined) {
+                return 0;
+            }
+            else if (opponent.result === 3) {
+                return 3;
+            }
+            else if (user.distance >= opponent.distance) {
+                return 1;
+            }
+            else {
+                return 2;
+            }
+        } catch (err) {
+            console.log("getRanking Error from runningModel");
+            throw(err);
+        }
+    },
+
+    stopRunning: async (end_time, run_idx, user_idx) => {
+        try {
+            const query = `UPDATE run AS user, run As opponent SET user.result = IF (opponent.result=3, 4, 3), user.end_time="${end_time}" WHERE user.run_idx=${run_idx} AND opponent.game_idx=user.game_idx AND opponent.user_idx<>${user_idx} AND user.user_idx=${user_idx};`;
             const result = await queryParam(query);
             return result;
         } catch (err) {
-            console.log("getOpponentRun Error");
+            console.log("stopRunning Error from runningModel");
+            throw(err);
+        }
+    },
+
+    insertCoordinates: async (run_idx, coordinates) => {
+        try {
+            let coordinateArr = [];
+            const coordinate_fields = `latitude, longitude, run_idx`;
+            if (coordinates.length !== 0) {
+                for (var i = 0; i < coordinates.length; i++) {
+                    let temp = Object.values(coordinates[i]);
+                    temp.push(run_idx);
+                    coordinateArr.push(temp);
+                }
+                const coordinate_query = `INSERT INTO coordinate (${coordinate_fields}) VALUES ?`;
+                const coordinate_result = await queryParamArr(coordinate_query, [coordinateArr]);
+                return coordinate_result;
+            }
+            // 나중에 채워넣기
+        } catch (err) {
+            console.log("insertCoordinates Error from runningModel");
+            throw(err);
+        }
+    },
+    
+    endRunning: async (end_time, run_idx, user_idx) => {
+        try {
+            const update_query = `UPDATE run AS user, run As opponent SET user.result = CASE\
+            WHEN opponent.result=1 THEN 2\
+            WHEN opponent.result=2 THEN 1\
+            WHEN opponent.result=3 THEN 1\
+            WHEN opponent.result=5 THEN 5\
+            WHEN opponent.distance=user.distance THEN 5\
+            WHEN opponent.distance<user.distance THEN 1\
+            WHEN opponent.distance>user.distance THEN 2\
+            END,\
+            user.end_time="${end_time}"\
+            WHERE user.run_idx=${run_idx} AND opponent.game_idx=user.game_idx AND opponent.user_idx<>${user_idx} AND user.user_idx=${user_idx};`;
+            const update_result = await queryParam(update_query);
+            if (update_result.changedRows !== 1) {
+                return 0;
+            }
+            else {
+                const select_query = `SELECT result FROM run WHERE run_idx=${run_idx}`;
+                const select_result = await queryParam(select_query);
+                return select_result[0].result;
+            }
+        } catch (err) {
+            console.log("endRunning Error from runningModel");
             throw(err);
         }
     }

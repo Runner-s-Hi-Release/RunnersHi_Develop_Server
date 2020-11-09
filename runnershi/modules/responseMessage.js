@@ -22,9 +22,13 @@ module.exports = {
     
     // 러닝
     UPDATE_RUN_SUCCESS: "러닝 업데이트 성공",
+    STOP_RUN_SUCCESS: "러닝 중단 성공",
+    STOP_RUN_FAIL: "러닝 중단 실패",
     UPDATE_RUN_FAIL: '러닝 업데이트 실패',
-    OPPONENT_RUN_SUCCESS: "상대방 러닝 조회 성공",
-    OPPONENT_RUN_FAIL: "상대방 러닝 조회 실패",
+    RANKING_SUCCESS: "랭킹 조회 성공",
+    RANKING_FAIL: "랭킹 조회 실패",
+    END_RUN_SUCCESS: "러닝 종료 성공",
+    END_RUN_FAIL: "러닝 종료 실패",
     OPPONENT_INFO_SUCCESS: "상대방 정보 조회 성공",
     OPPONENT_INFO_FAIL: "상대방 정보 조회 실패",
 
@@ -35,7 +39,9 @@ module.exports = {
     NO_OPPONENT: "상대 러너가 대기열에서 이탈했습니다",
     MATCH_WAITING: "매칭 대기 중",
     MATCH_SUCCESS: "상대 러너와 매칭 성공",
+    STOP_MATCHING: "매칭 중단 성공",
     OPPONENT_DISCONNET: "상대방과의 연결이 끊어졌습니다",
+    NOT_MATCHED: "매칭되지 않았습니다",
     CONFIRM_WAITING: "상대 러너의 승인 대기 중",
     CONFIRM_SUCCESS: "러닝 승인 성공",
 
