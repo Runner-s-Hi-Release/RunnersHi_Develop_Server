@@ -10,7 +10,6 @@ moment.tz.setDefault("Asia/Seoul");
 
 let awaiters = {};
 let matchedSet = new Set([]);
-let runningList = [];
 
 function monitor() {
     console.log("awaiters: ", awaiters);

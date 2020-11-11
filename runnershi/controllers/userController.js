@@ -22,7 +22,19 @@ module.exports = {
             }
             else {
                 const { token, refreshToken } = await jwt.sign(payload);
-                res.status(CODE.OK).send(util.success(CODE.OK, MSG.CREATED_USER, { accessToken: token, nickname: payload.nickname, gender: payload.gender, level: payload.level, image: payload.image, badge: payload.badge, win: 0, lose: 0 }));
+                let badge_arr = [];
+                for (var i = 0; i < payload.badge; i++) {
+                    if (payload.badge[i] === '0') {
+                        badge_arr.push(true);
+                    }
+                    else if (payload.badge[i] === '1') {
+                        badge_arr.push(true);
+                    }
+                    else {
+                        console.log('something wrong with badge!');
+                    }
+                }
+                res.status(CODE.OK).send(util.success(CODE.OK, MSG.CREATED_USER, { accessToken: token, nickname: payload.nickname, gender: payload.gender, level: payload.level, image: payload.image, badge: badge_arr, win: 0, lose: 0 }));
             }
         }
         else {
