@@ -79,7 +79,7 @@ module.exports = {
                             const opponent = Object.values(awaiters).find(opponent => (opponent.user_idx !== user_idx) && (opponent.time === time) && (opponent.level === level) && (opponent.wantGender.includes(gender)) && (wantGender.includes(opponent.gender)) && (opponent.matched === 0));
                             if (opponent === undefined) {
                                 monitor();
-                                res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_WAITING));
+                                res.status(CODE.NO_CONTENT).send(util.success(CODE.NO_CONTENT, MSG.MATCH_WAITING));
                                 return;
                             }
                             else {
