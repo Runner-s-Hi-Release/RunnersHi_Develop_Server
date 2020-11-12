@@ -15,7 +15,9 @@ module.exports = {
             level: user.level,
             nickname: user.nickname,
             image: user.image,
-            badge: user.badge
+            badge: user.badge,
+            win: user.win,
+            lose: user.lose
         }
         const result = {
             token: jwt.sign(payload, secretKey, options),

@@ -10,7 +10,6 @@ moment.tz.setDefault("Asia/Seoul");
 
 let awaiters = {};
 let matchedSet = new Set([]);
-let runningList = [];
 
 function monitor() {
     console.log("awaiters: ", awaiters);
@@ -33,6 +32,8 @@ module.exports = {
             const level = req.decoded.level;
             const image = req.decoded.image;
             const nickname = req.decoded.nickname;
+            const win = req.decoded.win;
+            const lose = req.decoded.lose;
 
             if (!time || !wantGender) {
                 res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NULL_VALUE));
@@ -43,7 +44,7 @@ module.exports = {
                 return;
             }
             else {
-                awaiters[user_idx] = {user_idx: user_idx, time: time, wantGender: wantGender, gender: gender, level: level, nickname: nickname, image: image, matched: 0, confirmCount: 0}
+                awaiters[user_idx] = {user_idx: user_idx, time: time, wantGender: wantGender, gender: gender, level: level, nickname: nickname, image: image, win: win, lose: lose, matched: 0, confirmCount: 0}
                 monitor();
                 res.status(CODE.OK).send(util.success(CODE.OK, MSG.AWAIT_SUCCESS));
             }
@@ -75,31 +76,37 @@ module.exports = {
                         return;
                     }
                     else {
-                        const candidate = Object.values(awaiters).find(awaiter => (awaiter.matched === user_idx) && !(matchedSet.has(awaiter.user_idx)))
-                        if (candidate === undefined) {
-                            const opponent = Object.values(awaiters).find(opponent => (opponent.user_idx !== user_idx) && (opponent.time === time) && (opponent.level === level) && (opponent.wantGender.includes(gender)) && (wantGender.includes(opponent.gender)) && (opponent.matched === 0));
-                            if (opponent === undefined) {
-                                monitor();
-                                res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_WAITING));
-                                return;
+                        let counter = 0;
+                        const intervalId = setInterval(async function() {
+                            counter += 1;
+                            console.log("Counter: ", counter);
+                            const candidate = Object.values(awaiters).find(awaiter => (awaiter.matched === user_idx) && !(matchedSet.has(awaiter.user_idx)))
+                            if (candidate === undefined) {
+                                const opponent = Object.values(awaiters).find(opponent => (opponent.user_idx !== user_idx) && (opponent.time === time) && (opponent.level === level) && (opponent.wantGender.includes(gender)) && (wantGender.includes(opponent.gender)) && (opponent.matched === 0));
+                                if (opponent === undefined && counter >= 30) {
+                                    monitor();
+                                    clearInterval(intervalId);
+                                    res.status(CODE.NO_CONTENT).send(util.success(CODE.NO_CONTENT, MSG.MATCH_WAITING));
+                                    return;
+                                }
+                                else if (opponent !== undefined) {
+                                    awaiters[user_idx].matched = opponent.user_idx;
+                                    matchedSet.add(opponent.user_idx);
+                                    monitor();
+                                    clearInterval(intervalId);
+                                    res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS));
+                                    return;
+                                }
                             }
                             else {
-                                awaiters[user_idx].matched = opponent.user_idx;
-                                matchedSet.add(opponent.user_idx);
-                                opponentRecord = await RunningModel.getOpponentRecord(opponent.user_idx);
+                                awaiters[user_idx].matched = candidate.user_idx;
+                                matchedSet.add(candidate.user_idx);
                                 monitor();
-                                res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS, {opponent_level: opponent.level, opponent_nickname: opponent.nickname, opponent_image: opponent.image, opponent_win: opponentRecord.win, opponent_lose: opponentRecord.lose}));
+                                clearInterval(intervalId);
+                                res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS));
                                 return;
                             }
-                        }
-                        else {
-                            awaiters[user_idx].matched = candidate.user_idx;
-                            matchedSet.add(candidate.user_idx);
-                            opponentRecord = await RunningModel.getOpponentRecord(candidate.user_idx);
-                            monitor();
-                            res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS, {opponent_level: candidate.level, opponent_nickname: candidate.nickname, opponent_image: candidate.image, opponent_win: opponentRecord.win, opponent_lose: opponentRecord.lose}));
-                            return;
-                        }
+                        }, 1000);
                     }
                 }
             }
@@ -192,7 +199,7 @@ module.exports = {
                         awaiters[user_idx].game_idx = game_idx;
                         const run_idx = await RunningModel.insertRun(moment().format("YYYY-MM-DD HH:mm:ss"), game_idx, user_idx);
                         monitor();
-                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.CONFIRM_SUCCESS, {run_idx: run_idx}));
+                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.CONFIRM_SUCCESS, {run_idx: run_idx, opponent_level: opponent.level, opponent_nickname: opponent.nickname, opponent_image: opponent.image, opponent_win: opponent.win, opponent_lose: opponent.lose}));
                         return;
                     }
                     else {
@@ -203,7 +210,7 @@ module.exports = {
                         delete awaiters[awaiters[user_idx].matched];
                         delete awaiters[user_idx];
                         monitor();
-                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.CONFIRM_SUCCESS, {run_idx: run_idx}));
+                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.CONFIRM_SUCCESS, {run_idx: run_idx, opponent_level: opponent.level, opponent_nickname: opponent.nickname, opponent_image: opponent.image, opponent_win: opponent.win, opponent_lose: opponent.lose}));
                         return;
                     }
                 }
