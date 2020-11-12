@@ -94,7 +94,7 @@ module.exports = {
                                     matchedSet.add(opponent.user_idx);
                                     monitor();
                                     clearInterval(intervalId);
-                                    res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS, {opponent_level: opponent.level, opponent_nickname: opponent.nickname, opponent_image: opponent.image, opponent_win: opponent.win, opponent_lose: opponent.lose}));
+                                    res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS));
                                     return;
                                 }
                             }
@@ -103,7 +103,7 @@ module.exports = {
                                 matchedSet.add(candidate.user_idx);
                                 monitor();
                                 clearInterval(intervalId);
-                                res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS, {opponent_level: candidate.level, opponent_nickname: candidate.nickname, opponent_image: candidate.image, opponent_win: candidate.win, opponent_lose: candidate.lose}));
+                                res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS));
                                 return;
                             }
                         }, 1000);
@@ -199,7 +199,7 @@ module.exports = {
                         awaiters[user_idx].game_idx = game_idx;
                         const run_idx = await RunningModel.insertRun(moment().format("YYYY-MM-DD HH:mm:ss"), game_idx, user_idx);
                         monitor();
-                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.CONFIRM_SUCCESS, {run_idx: run_idx}));
+                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.CONFIRM_SUCCESS, {run_idx: run_idx, opponent_level: opponent.level, opponent_nickname: opponent.nickname, opponent_image: opponent.image, opponent_win: opponent.win, opponent_lose: opponent.lose}));
                         return;
                     }
                     else {
@@ -210,7 +210,7 @@ module.exports = {
                         delete awaiters[awaiters[user_idx].matched];
                         delete awaiters[user_idx];
                         monitor();
-                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.CONFIRM_SUCCESS, {run_idx: run_idx}));
+                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.CONFIRM_SUCCESS, {run_idx: run_idx, opponent_level: opponent.level, opponent_nickname: opponent.nickname, opponent_image: opponent.image, opponent_win: opponent.win, opponent_lose: opponent.lose}));
                         return;
                     }
                 }
