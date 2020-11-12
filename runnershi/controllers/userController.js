@@ -23,9 +23,9 @@ module.exports = {
             else {
                 const { token, refreshToken } = await jwt.sign(payload);
                 let badge_arr = [];
-                for (var i = 0; i < payload.badge; i++) {
+                for (var i = 0; i < payload.badge.length; i++) {
                     if (payload.badge[i] === '0') {
-                        badge_arr.push(true);
+                        badge_arr.push(false);
                     }
                     else if (payload.badge[i] === '1') {
                         badge_arr.push(true);
@@ -40,7 +40,20 @@ module.exports = {
         else {
             // 등록돼있을 때
             const { token, refreshToken } = await jwt.sign(user[0]);
-            res.status(CODE.OK).send(util.success(CODE.OK, MSG.LOGIN_SUCCESS, { accessToken: token,  nickname: user[0].nickname, gender: user[0].gender, level: user[0].level, image: user[0].image, badge: user[0].badge, win: user[0].win, lose: user[0].lose }));
+            let badge_arr = [];
+            for (var i = 0; i < user[0].badge.length; i++) {
+                console.log(user[0]['badge'][i])
+                if (user[0]['badge'][i] === '0') {
+                    badge_arr.push(false);
+                }
+                else if (user[0]['badge'][i] === '1') {
+                    badge_arr.push(true);
+                }
+                else {
+                    console.log('something wrong with badge!');
+                }
+            }
+            res.status(CODE.OK).send(util.success(CODE.OK, MSG.LOGIN_SUCCESS, { accessToken: token,  nickname: user[0].nickname, gender: user[0].gender, level: user[0].level, image: user[0].image, badge: badge_arr, win: user[0].win, lose: user[0].lose }));
         }
     }
 }
