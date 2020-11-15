@@ -83,18 +83,18 @@ module.exports = {
                             const candidate = Object.values(awaiters).find(awaiter => (awaiter.matched === user_idx) && !(matchedSet.has(awaiter.user_idx)))
                             if (candidate === undefined) {
                                 const opponent = Object.values(awaiters).find(opponent => (opponent.user_idx !== user_idx) && (opponent.time === time) && (opponent.level === level) && (opponent.wantGender.includes(gender)) && (wantGender.includes(opponent.gender)) && (opponent.matched === 0));
-                                if (opponent === undefined && counter >= 30) {
+                                if (opponent === undefined && counter >= 10) {
                                     monitor();
                                     clearInterval(intervalId);
-                                    res.status(CODE.NO_CONTENT).send(util.success(CODE.NO_CONTENT, MSG.MATCH_WAITING));
+                                    res.status(CODE.REQUEST_TIMEOUT).send(util.fail(CODE.REQUEST_TIMEOUT, MSG.MATCH_WAITING));
                                     return;
                                 }
                                 else if (opponent !== undefined) {
                                     awaiters[user_idx].matched = opponent.user_idx;
                                     matchedSet.add(opponent.user_idx);
                                     monitor();
-                                    clearInterval(intervalId);
                                     res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS));
+                                    clearInterval(intervalId);
                                     return;
                                 }
                             }
@@ -177,7 +177,7 @@ module.exports = {
                     matchedSet.delete(user_idx);
                     console.log("상대방 없음");
                     monitor();
-                    res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NO_OPPONENT));
+                    res.status(CODE.NOT_FOUND).send(util.fail(CODE.NOT_FOUND, MSG.NO_OPPONENT));
                     return;
                 }
                 else if (opponent.confirmCount === 0) {
