@@ -15,16 +15,17 @@ const record = {
       }
 
       for(let i = 0; i < data.length; i++){
-       final_data.push({
-         date: data[i].date,
-         distance: data[i].distance,
-         time: data[i].time,
-         run_idx: data[i].run_idx,
-         result: (data[i].result === 1 || data[i].result === 5) ? 1 : 2,
-         game_idx: data[i].game_idx,
-       });
-     }
-     return res.status(statusCode.OK).send(util.success(statusCode.OK, resMessage.RECORD_ALL_SUCCESS, final_data));
+        if (data[i].time === null)
+        final_data.push({
+          date: data[i].date,
+          distance: (data[i].distance !== null) ? data[i].distance : 0,
+          time: (data[i].time !== null) ? data[i].time : 0,
+          run_idx: data[i].run_idx,
+          result: (data[i].result === 1 || data[i].result === 5) ? 1 : 2,
+          game_idx: data[i].game_idx,
+        });
+      }
+      return res.status(statusCode.OK).send(util.success(statusCode.OK, resMessage.RECORD_ALL_SUCCESS, final_data));
     } catch(error){
       throw(error);
     }

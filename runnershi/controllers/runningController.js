@@ -44,7 +44,8 @@ module.exports = {
                 return;
             }
             else {
-                awaiters[user_idx] = {user_idx: user_idx, time: time, wantGender: wantGender, gender: gender, level: level, nickname: nickname, image: image, win: win, lose: lose, matched: 0, confirmCount: 0}
+                awaiters[user_idx] = {user_idx: user_idx, time: time, wantGender: wantGender, gender: gender, level: level, nickname: nickname, image: image, win: win, lose: lose, matched: 0, confirmCount: 0};
+                setTimeout(() => delete awaiters[user_idx], 180000);
                 monitor();
                 res.status(CODE.OK).send(util.success(CODE.OK, MSG.AWAIT_SUCCESS));
             }
