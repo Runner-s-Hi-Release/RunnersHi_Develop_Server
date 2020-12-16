@@ -49,8 +49,12 @@ module.exports = {
                     setTimeout(() => delete awaiters[user_idx], 180000);
                     monitor();
                 }
-                const {matched, waiting} = awaiters[user_idx];
-                if (waiting) {
+                const {matched, waiting, confirmed} = awaiters[user_idx];
+                if (waiting && confirmed) {
+                    res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.CONFIRM_WAITING));
+                    return;
+                }
+                else if (waiting) {
                     res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NOW_FINDING));
                     return;
                 }
@@ -70,6 +74,7 @@ module.exports = {
                                     if (awaiters[user_idx].matched in awaiters) {
                                         awaiters[awaiters[user_idx].matched].selected = false;
                                     }
+                                    clearInterval(intervalId);
                                     res.status(CODE.REQUEST_TIMEOUT).send(util.fail(CODE.REQUEST_TIMEOUT, MSG.MATCH_WAITING));
                                     return;
                                 }
@@ -81,6 +86,7 @@ module.exports = {
                                 else if (awaiters[awaiters[user_idx].matched].matched === user_idx) {
                                     awaiters[user_idx].waiting = 0;
                                     monitor();
+                                    clearInterval(intervalId);
                                     res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS));
                                     return;
                                 }
@@ -116,7 +122,9 @@ module.exports = {
                                 }
                             }
                         } catch (err) {
-                            console.log("Interval Error from searching");
+                            console.log("Interval Error from find");
+                            clearInterval(intervalId);
+                            throw(err);
                         }
                     }, 1000);
                 }
@@ -161,62 +169,70 @@ module.exports = {
                 return;
             }
             else if (!(user_idx in awaiters)) {
-                matchedSet.delete(user_idx);
-                monitor();
                 res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NOT_WAITING));
                 return;
             }
             else if (awaiters[user_idx].matched === 0) {
-                matchedSet.delete(user_idx);
                 monitor();
                 res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NOT_MATCHED));
                 return;
             }
             else {
-                awaiters[user_idx].confirmCount += 1
+                awaiters[user_idx].confirmed = true;
                 const opponent = awaiters[awaiters[user_idx].matched]
                 if (opponent === undefined) {
-                    matchedSet.delete(awaiters[user_idx].matched);
                     awaiters[user_idx].matched = 0
-                    matchedSet.delete(user_idx);
                     console.log("상대방 없음");
                     monitor();
                     res.status(CODE.NOT_FOUND).send(util.fail(CODE.NOT_FOUND, MSG.NO_OPPONENT));
                     return;
                 }
-                else if (opponent.confirmCount === 0) {
-                    if (awaiters[user_idx].confirmCount === 5) {
-                        delete awaiters[awaiters[user_idx].matched];
-                        awaiters[user_idx].matched = 0;
-                        monitor();
-                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.OPPONENT_DISCONNECT));
-                    }
-                    else {
-                        monitor();
-                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.CONFIRM_WAITING));
-                        return;
-                    }
+                else if (!(opponent.confirmed)) {
+                    awaiters[user_idx].waiting = 1;
+                    const intervalId = setInterval(async function() {
+                        try {
+                            if (!(awaiters[user_idx].matched in awaiters)) {
+                                awaiters[user_idx].matched = 0;
+                                awaiters[user_idx].waiting = 0;
+                                awaiters[user_idx].confirmed = false;
+                                clearInterval(intervalId);
+                                res.status(CODE.NOT_FOUND).send(util.fail(CODE.NOT_FOUND, MSG.NO_OPPONENT));
+                                return;
+                            }
+                            else if (awaiters[awaiters[user_idx].matched].confirmed) {
+                                const game_idx = awaiters[awaiters[user_idx].matched].game_idx;
+                                const run_idx = await RunningModel.insertRun(moment().format("YYYY-MM-DD HH:mm:ss"), game_idx, user_idx);
+                                delete awaiters[awaiters[user_idx].matched];
+                                delete awaiters[user_idx];
+                                monitor();
+                                clearInterval(intervalId);
+                                res.status(CODE.OK).send(util.success(CODE.OK, MSG.CONFIRM_SUCCESS, {run_idx: run_idx, opponent_level: opponent.level, opponent_nickname: opponent.nickname, opponent_image: opponent.image, opponent_win: opponent.win, opponent_lose: opponent.lose}));
+                                return;
+                            }
+                            else if (awaiters[user_idx].waiting > 10) {
+                                delete awaiters[awaiters[user_idx].matched];
+                                awaiters[user_idx].matched = 0;
+                                awaiters[user_idx].waiting = 0;
+                                awaiters[user_idx].confirmed = false;
+                                monitor();
+                                clearInterval(intervalId);
+                                res.status(CODE.OK).send(util.success(CODE.OK, MSG.OPPONENT_DISCONNECT));
+                                return
+                            }
+                            awaiters[user_idx].waiting += 1;
+                        } catch (err) {
+                            console.log("Interval Error from confirm");
+                            throw(err);
+                        }
+                    }, 1000);
                 }
                 else {
-                    if (awaiters[user_idx].confirmCount === 1) {
-                        const game_idx = await RunningModel.insertGame(awaiters[user_idx].time);
-                        awaiters[user_idx].game_idx = game_idx;
-                        const run_idx = await RunningModel.insertRun(moment().format("YYYY-MM-DD HH:mm:ss"), game_idx, user_idx);
-                        monitor();
-                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.CONFIRM_SUCCESS, {run_idx: run_idx, opponent_level: opponent.level, opponent_nickname: opponent.nickname, opponent_image: opponent.image, opponent_win: opponent.win, opponent_lose: opponent.lose}));
-                        return;
-                    }
-                    else {
-                        const game_idx = awaiters[awaiters[user_idx].matched].game_idx;
-                        const run_idx = await RunningModel.insertRun(moment().format("YYYY-MM-DD HH:mm:ss"), game_idx, user_idx);
-                        matchedSet.delete(user_idx);
-                        matchedSet.delete(awaiters[user_idx].matched);
-                        delete awaiters[awaiters[user_idx].matched];
-                        delete awaiters[user_idx];
-                        monitor();
-                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.CONFIRM_SUCCESS, {run_idx: run_idx, opponent_level: opponent.level, opponent_nickname: opponent.nickname, opponent_image: opponent.image, opponent_win: opponent.win, opponent_lose: opponent.lose}));
-                        return;
-                    }
+                    const game_idx = await RunningModel.insertGame(awaiters[user_idx].time);
+                    awaiters[user_idx].game_idx = game_idx;
+                    const run_idx = await RunningModel.insertRun(moment().format("YYYY-MM-DD HH:mm:ss"), game_idx, user_idx);
+                    monitor();
+                    res.status(CODE.OK).send(util.success(CODE.OK, MSG.CONFIRM_SUCCESS, {run_idx: run_idx, opponent_level: opponent.level, opponent_nickname: opponent.nickname, opponent_image: opponent.image, opponent_win: opponent.win, opponent_lose: opponent.lose}));
+                    return;
                 }
             }
         } catch (err) {
