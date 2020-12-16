@@ -42,7 +42,6 @@ module.exports = {
             const { token, refreshToken } = await jwt.sign(user[0]);
             let badge_arr = [];
             for (var i = 0; i < user[0].badge.length; i++) {
-                console.log(user[0]['badge'][i])
                 if (user[0]['badge'][i] === '0') {
                     badge_arr.push(false);
                 }
