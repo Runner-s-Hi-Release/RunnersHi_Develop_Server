@@ -34,6 +34,7 @@ module.exports = {
 
     // 매칭
     AWAIT_SUCCESS: "대기열 추가 성공",
+    NOW_FINDING: "탐색 중입니다",
     ALREADY_FOUND: "이미 매칭 상대를 발견했습니다",
     NOT_WAITING: "해당 유저가 대기열에 없습니다",
     NO_OPPONENT: "상대 러너가 대기열에서 이탈했습니다",

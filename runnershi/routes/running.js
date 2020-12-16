@@ -4,7 +4,6 @@ const auth = require("../middlewares/auth");
 const runningController = require("../controllers/runningController");
 
 /* GET users listing. */
-router.post('/start', auth.checkToken, runningController.startMatching);
 router.get('/find', auth.checkToken, runningController.findMatching);
 router.post('/confirm', auth.checkToken, runningController.confirmMatching);
 router.delete('/stopMatching', auth.checkToken, runningController.stopMatching);

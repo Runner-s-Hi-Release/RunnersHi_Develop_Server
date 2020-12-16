@@ -9,17 +9,18 @@ require('moment-timezone');
 moment.tz.setDefault("Asia/Seoul");
 
 let awaiters = {};
-let matchedSet = new Set([]);
 
 function monitor() {
     console.log("awaiters: ", awaiters);
-    console.log("matchedSet: ", matchedSet);
-};
+}
 
 module.exports = {
-    startMatching: async (req, res) => {
+
+    findMatching: async (req, res) => {
         try {
-            let {time, wantGender} = req.body;
+            const {time} = req.body;
+            let {wantGender} = req.body;
+            
             if (wantGender === 3) {
                 wantGender = [1, 2];
             }
@@ -34,81 +35,90 @@ module.exports = {
             const nickname = req.decoded.nickname;
             const win = req.decoded.win;
             const lose = req.decoded.lose;
-
             if (!time || !wantGender) {
                 res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NULL_VALUE));
                 return;
             }
-            if (!user_idx || !gender || !image || !level || !nickname) {
-                res.status(CODE.DB_ERROR).send(util.fail(CODE.DB_ERROR, MSG.READ_FAIL));
-                return;
-            }
-            else {
-                awaiters[user_idx] = {user_idx: user_idx, time: time, wantGender: wantGender, gender: gender, level: level, nickname: nickname, image: image, win: win, lose: lose, matched: 0, confirmCount: 0};
-                setTimeout(() => delete awaiters[user_idx], 180000);
-                monitor();
-                res.status(CODE.OK).send(util.success(CODE.OK, MSG.AWAIT_SUCCESS));
-            }
-
-        } catch (err) {
-            console.log("startMatching Error from runningController");
-            throw(err);
-        }
-    },
-
-    findMatching: async (req, res) => {
-        try {
-            const user_idx = req.decoded.userIdx;
-            if (!user_idx) {
+            if (!user_idx || !gender || !image || !level || !nickname || !win || !lose) {
                 res.status(CODE.DB_ERROR).send(util.fail(CODE.DB_ERROR, MSG.READ_FAIL));
                 return;
             }
             else {
                 if (!(user_idx in awaiters)) {
-                    res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NOT_WAITING));
+                    awaiters[user_idx] = {user_idx: user_idx, time: time, wantGender: wantGender, gender: gender, level: level, nickname: nickname, image: image, win: win, lose: lose, counter: 0, matched: 0, waiting: 0, selected: false, confirmed : false};
+                    setTimeout(() => delete awaiters[user_idx], 180000);
                     monitor();
+                }
+                const {matched, waiting} = awaiters[user_idx];
+                if (waiting) {
+                    res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NOW_FINDING));
+                    return;
+                }
+                else if (matched !== 0) {
+                    monitor();
+                    res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.ALREADY_FOUND));
                     return;
                 }
                 else {
-                    const {time, wantGender, gender, level, matched} = awaiters[user_idx];
-                    if (matched !== 0) {
-                        monitor();
-                        res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.ALREADY_FOUND));
-                        return;
-                    }
-                    else {
-                        let counter = 0;
-                        const intervalId = setInterval(async function() {
-                            counter += 1;
-                            console.log("Counter: ", counter);
-                            const candidate = Object.values(awaiters).find(awaiter => (awaiter.matched === user_idx) && !(matchedSet.has(awaiter.user_idx)))
-                            if (candidate === undefined) {
-                                const opponent = Object.values(awaiters).find(opponent => (opponent.user_idx !== user_idx) && (opponent.time === time) && (opponent.level === level) && (opponent.wantGender.includes(gender)) && (wantGender.includes(opponent.gender)) && (opponent.matched === 0));
-                                if (opponent === undefined && counter >= 10) {
-                                    monitor();
-                                    clearInterval(intervalId);
+                    const intervalId = setInterval(async function() {
+                        try {
+                            awaiters[user_idx].counter += 1;
+                            if (awaiters[user_idx].waiting) {
+                                if (awaiters[user_idx].counter > 30) {
+                                    awaiters[user_idx].matched = 0;
+                                    awaiters[user_idx].waiting = 0;
+                                    if (awaiters[user_idx].matched in awaiters) {
+                                        awaiters[awaiters[user_idx].matched].selected = false;
+                                    }
                                     res.status(CODE.REQUEST_TIMEOUT).send(util.fail(CODE.REQUEST_TIMEOUT, MSG.MATCH_WAITING));
                                     return;
                                 }
-                                else if (opponent !== undefined) {
-                                    awaiters[user_idx].matched = opponent.user_idx;
-                                    matchedSet.add(opponent.user_idx);
+                                else if (!(awaiters[user_idx].matched in awaiters)) {
+                                    console.log("opponent deleted");
+                                    awaiters[user_idx].matched = 0;
+                                    awaiters[user_idx].waiting = 0;
+                                }
+                                else if (awaiters[awaiters[user_idx].matched].matched === user_idx) {
+                                    awaiters[user_idx].waiting = 0;
                                     monitor();
                                     res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS));
+                                    return;
+                                }
+                                else if ((awaiters[user_idx].waiting) > 3) {
+                                    delete awaiters[awaiters[user_idx].matched];
+                                    awaiters[user_idx].matched = 0;
+                                    awaiters[user_idx].waiting = 0;
+                                }
+                                awaiters[user_idx].waiting += 1;
+                            }
+                            else {
+                                const candidate = Object.values(awaiters).find(awaiter => (awaiter.matched === user_idx) && (awaiter.waiting))
+                                if (candidate === undefined) {
+                                    const opponent = Object.values(awaiters).find(opponent => (opponent.user_idx !== user_idx) && (opponent.time === time) && (opponent.level === level) && (opponent.wantGender.includes(gender)) && (wantGender.includes(opponent.gender)) && (opponent.matched === 0) && !(opponent.selected));
+                                    if (opponent === undefined && awaiters[user_idx].counter >= 30) {
+                                        monitor();
+                                        clearInterval(intervalId);
+                                        res.status(CODE.REQUEST_TIMEOUT).send(util.fail(CODE.REQUEST_TIMEOUT, MSG.MATCH_WAITING));
+                                        return;
+                                    }
+                                    else if (opponent !== undefined) {
+                                        awaiters[user_idx].matched = opponent.user_idx;
+                                        awaiters[user_idx].waiting = 1;
+                                        awaiters[opponent.user_idx].selected = true;
+                                    }
+                                }
+                                else {
+                                    awaiters[user_idx].matched = candidate.user_idx;
+                                    monitor();
                                     clearInterval(intervalId);
+                                    res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS));
                                     return;
                                 }
                             }
-                            else {
-                                awaiters[user_idx].matched = candidate.user_idx;
-                                matchedSet.add(candidate.user_idx);
-                                monitor();
-                                clearInterval(intervalId);
-                                res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS));
-                                return;
-                            }
-                        }, 1000);
-                    }
+                        } catch (err) {
+                            console.log("Interval Error from searching");
+                        }
+                    }, 1000);
                 }
             }
         } catch (err) {
@@ -129,16 +139,9 @@ module.exports = {
                 return;
             }
             else {
-                const clearMatching = function(awaiters, user_idx) {
-                    Object.keys(awaiters).forEach(function(idx){ 
-                        if(awaiters[idx].matched === user_idx) {
-                            awaiters[idx].matched = 0;
-                        }
-                    });
-                    return awaiters;
+                if (awaiters[user_idx].matched !== 0) {
+                    awaiters[awaiters[user_idx].matched].selected = false;
                 }
-                awaiters = clearMatching(awaiters, user_idx);
-                matchedSet.delete(user_idx);
                 delete awaiters[user_idx];
                 monitor();
                 res.status(CODE.OK).send(util.success(CODE.OK, MSG.STOP_MATCHING));
