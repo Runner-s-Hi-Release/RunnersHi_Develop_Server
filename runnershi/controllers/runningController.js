@@ -75,6 +75,7 @@ module.exports = {
                                         awaiters[awaiters[user_idx].matched].selected = false;
                                     }
                                     clearInterval(intervalId);
+                                    delete awaiters[user_idx];
                                     res.status(CODE.REQUEST_TIMEOUT).send(util.fail(CODE.REQUEST_TIMEOUT, MSG.MATCH_WAITING));
                                     return;
                                 }
@@ -104,6 +105,7 @@ module.exports = {
                                     if (opponent === undefined && awaiters[user_idx].counter >= 30) {
                                         monitor();
                                         clearInterval(intervalId);
+                                        delete awaiters[user_idx];
                                         res.status(CODE.REQUEST_TIMEOUT).send(util.fail(CODE.REQUEST_TIMEOUT, MSG.MATCH_WAITING));
                                         return;
                                     }
