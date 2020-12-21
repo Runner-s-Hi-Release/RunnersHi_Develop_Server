@@ -75,7 +75,7 @@ module.exports = {
                                         }
                                         clearInterval(intervalId);
                                         delete awaiters[user_idx];
-                                        res.status(CODE.NO_CONTENT).send(util.fail(CODE.NO_CONTENT, MSG.MATCH_WAITING));
+                                        res.status(CODE.OK).send(util.fail(CODE.OK, MSG.MATCH_WAITING));
                                         return;
                                     }
                                     else if (!(awaiters[user_idx].matched in awaiters)) {
@@ -105,7 +105,7 @@ module.exports = {
                                             monitor();
                                             clearInterval(intervalId);
                                             delete awaiters[user_idx];
-                                            res.status(CODE.NO_CONTENT).send(util.fail(CODE.NO_CONTENT, MSG.MATCH_WAITING));
+                                            res.status(CODE.OK).send(util.fail(CODE.OK, MSG.MATCH_WAITING));
                                             return;
                                         }
                                         else if (opponent !== undefined) {
