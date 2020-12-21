@@ -20,16 +20,19 @@ module.exports = {
         try {
             const {time} = req.body;
             let {wantGender} = req.body;
-            
+            if (!time || !wantGender) {
+                res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NULL_VALUE));
+                return;
+            }
+            else if (!([1800, 2700, 3600, 5400].includes(time)) || !([1, 2, 3].includes(wantGender))) {
+                res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.OUT_OF_VALUE));
+                return;
+            }
             if (wantGender === 3) {
                 wantGender = [1, 2];
             }
-            else if (wantGender === 1 || wantGender === 2) {
-                wantGender = [wantGender];
-            }
             else {
-                res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.OUT_OF_VALUE));
-                return;
+                wantGender = [wantGender];
             }
             console.log(req.decoded);
             const user_idx = req.decoded.userIdx;
@@ -39,10 +42,7 @@ module.exports = {
             const nickname = req.decoded.nickname;
             const win = req.decoded.win;
             const lose = req.decoded.lose;
-            if (!time || !wantGender) {
-                res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NULL_VALUE));
-                return;
-            }
+            
             if (!user_idx || !gender || !image || !level || !nickname || win === undefined || lose === undefined) {
                 res.status(CODE.DB_ERROR).send(util.fail(CODE.DB_ERROR, MSG.READ_FAIL));
                 return;
@@ -54,77 +54,80 @@ module.exports = {
                 }
                 const {matched, waiting, confirmed} = awaiters[user_idx];
                 if (waiting && confirmed) {
-                    res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.CONFIRM_WAITING));
+                    res.status(CODE.ACCEPTED).send(util.fail(CODE.ACCEPTED, MSG.CONFIRM_WAITING));
                     return;
                 }
                 else if (waiting) {
-                    res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NOW_FINDING));
-                    return;
-                }
-                else if (matched !== 0) {
-                    monitor();
-                    res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.ALREADY_FOUND));
+                    res.status(CODE.ACCEPTED).send(util.fail(CODE.ACCEPTED, MSG.NOW_FINDING));
                     return;
                 }
                 else {
                     const intervalId = setInterval(async function() {
                         try {
-                            awaiters[user_idx].counter += 1;
-                            if (awaiters[user_idx].waiting) {
-                                if (awaiters[user_idx].counter > 30) {
-                                    awaiters[user_idx].matched = 0;
-                                    awaiters[user_idx].waiting = 0;
-                                    if (awaiters[user_idx].matched in awaiters) {
-                                        awaiters[awaiters[user_idx].matched].selected = false;
-                                    }
-                                    clearInterval(intervalId);
-                                    delete awaiters[user_idx];
-                                    res.status(CODE.REQUEST_TIMEOUT).send(util.fail(CODE.REQUEST_TIMEOUT, MSG.MATCH_WAITING));
-                                    return;
+                            if (user_idx in awaiters) {
+                                awaiters[user_idx].counter += 1;
+                                if (awaiters[user_idx].counter === 1) {
+                                    awaiters[user_idx].intervalId = intervalId;
                                 }
-                                else if (!(awaiters[user_idx].matched in awaiters)) {
-                                    console.log("opponent deleted");
-                                    awaiters[user_idx].matched = 0;
-                                    awaiters[user_idx].waiting = 0;
-                                }
-                                else if (awaiters[awaiters[user_idx].matched].matched === user_idx) {
-                                    awaiters[user_idx].waiting = 0;
-                                    monitor();
-                                    clearInterval(intervalId);
-                                    res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS));
-                                    return;
-                                }
-                                else if ((awaiters[user_idx].waiting) > 3) {
-                                    delete awaiters[awaiters[user_idx].matched];
-                                    awaiters[user_idx].matched = 0;
-                                    awaiters[user_idx].waiting = 0;
-                                }
-                                awaiters[user_idx].waiting += 1;
-                            }
-                            else {
-                                const candidate = Object.values(awaiters).find(awaiter => (awaiter.matched === user_idx) && (awaiter.waiting))
-                                if (candidate === undefined) {
-                                    const opponent = Object.values(awaiters).find(opponent => (opponent.user_idx !== user_idx) && (opponent.time === time) && (opponent.level === level) && (opponent.wantGender.includes(gender)) && (wantGender.includes(opponent.gender)) && (opponent.matched === 0) && !(opponent.selected));
-                                    if (opponent === undefined && awaiters[user_idx].counter >= 30) {
-                                        monitor();
+                                if (awaiters[user_idx].waiting) {
+                                    if (awaiters[user_idx].counter > 30) {
+                                        awaiters[user_idx].matched = 0;
+                                        awaiters[user_idx].waiting = 0;
+                                        if (awaiters[user_idx].matched in awaiters) {
+                                            awaiters[awaiters[user_idx].matched].selected = false;
+                                        }
                                         clearInterval(intervalId);
                                         delete awaiters[user_idx];
                                         res.status(CODE.REQUEST_TIMEOUT).send(util.fail(CODE.REQUEST_TIMEOUT, MSG.MATCH_WAITING));
                                         return;
                                     }
-                                    else if (opponent !== undefined) {
-                                        awaiters[user_idx].matched = opponent.user_idx;
-                                        awaiters[user_idx].waiting = 1;
-                                        awaiters[opponent.user_idx].selected = true;
+                                    else if (!(awaiters[user_idx].matched in awaiters)) {
+                                        console.log("opponent deleted");
+                                        awaiters[user_idx].matched = 0;
+                                        awaiters[user_idx].waiting = 0;
                                     }
+                                    else if (awaiters[awaiters[user_idx].matched].matched === user_idx) {
+                                        awaiters[user_idx].waiting = 0;
+                                        monitor();
+                                        clearInterval(intervalId);
+                                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS));
+                                        return;
+                                    }
+                                    else if ((awaiters[user_idx].waiting) > 3) {
+                                        delete awaiters[awaiters[user_idx].matched];
+                                        awaiters[user_idx].matched = 0;
+                                        awaiters[user_idx].waiting = 0;
+                                    }
+                                    awaiters[user_idx].waiting += 1;
                                 }
                                 else {
-                                    awaiters[user_idx].matched = candidate.user_idx;
-                                    monitor();
-                                    clearInterval(intervalId);
-                                    res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS));
-                                    return;
+                                    const candidate = Object.values(awaiters).find(awaiter => (awaiter.matched === user_idx) && (awaiter.waiting))
+                                    if (candidate === undefined) {
+                                        const opponent = Object.values(awaiters).find(opponent => (opponent.user_idx !== user_idx) && (opponent.time === time) && (opponent.level === level) && (opponent.wantGender.includes(gender)) && (wantGender.includes(opponent.gender)) && (opponent.matched === 0) && !(opponent.selected));
+                                        if (opponent === undefined && awaiters[user_idx].counter >= 30) {
+                                            monitor();
+                                            clearInterval(intervalId);
+                                            delete awaiters[user_idx];
+                                            res.status(CODE.REQUEST_TIMEOUT).send(util.fail(CODE.REQUEST_TIMEOUT, MSG.MATCH_WAITING));
+                                            return;
+                                        }
+                                        else if (opponent !== undefined) {
+                                            awaiters[user_idx].matched = opponent.user_idx;
+                                            awaiters[user_idx].waiting = 1;
+                                            awaiters[opponent.user_idx].selected = true;
+                                        }
+                                    }
+                                    else {
+                                        awaiters[user_idx].matched = candidate.user_idx;
+                                        monitor();
+                                        clearInterval(intervalId);
+                                        res.status(CODE.OK).send(util.success(CODE.OK, MSG.MATCH_SUCCESS));
+                                        return;
+                                    }
                                 }
+                            }
+                            else {
+                                console.log("Can't Find User!");
                             }
                         } catch (err) {
                             console.log("Interval Error from find");
@@ -154,6 +157,9 @@ module.exports = {
             else {
                 if (awaiters[user_idx].matched !== 0) {
                     awaiters[awaiters[user_idx].matched].selected = false;
+                }
+                if ("intervalId" in awaiters[user_idx]) {
+                    clearInterval(awaiters[user_idx].intervalId);
                 }
                 delete awaiters[user_idx];
                 monitor();
@@ -221,7 +227,7 @@ module.exports = {
                                 awaiters[user_idx].confirmed = false;
                                 monitor();
                                 clearInterval(intervalId);
-                                res.status(CODE.OK).send(util.success(CODE.OK, MSG.OPPONENT_DISCONNECT));
+                                res.status(CODE.ACCEPTED).send(util.success(CODE.ACCEPTED, MSG.OPPONENT_DISCONNECT));
                                 return
                             }
                             awaiters[user_idx].waiting += 1;
