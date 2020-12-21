@@ -220,9 +220,7 @@ module.exports = {
                                 }
                                 else if (awaiters[user_idx].waiting > 10) {
                                     delete awaiters[awaiters[user_idx].matched];
-                                    awaiters[user_idx].matched = 0;
-                                    awaiters[user_idx].waiting = 0;
-                                    awaiters[user_idx].confirmed = false;
+                                    delete awaiters[user_idx];
                                     monitor();
                                     clearInterval(intervalId);
                                     res.status(CODE.ACCEPTED).send(util.success(CODE.ACCEPTED, MSG.OPPONENT_DISCONNECT));
