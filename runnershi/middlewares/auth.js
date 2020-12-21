@@ -1,3 +1,4 @@
+const { return } = require('../config/database');
 const jwt = require('../modules/jwt');
 const MSG = require('../modules/responseMessage');
 const CODE = require('../modules/statusCode');
@@ -10,20 +11,27 @@ const authUtil = {
         var token = req.headers.jwt;
         
         if (!token) {
-            return res.json(util.fail(CODE.BAD_REQUEST, MSG.EMPTY_TOKEN));
+            res.json(util.fail(CODE.BAD_REQUEST, MSG.EMPTY_TOKEN));
+            return;
         }
         const user = await jwt.verify(token);
         if (user === TOKEN_EXPIRED) {
-            return res.json(util.fail(CODE.UNAUTHORIZED, MSG.EXPIRED_TOKEN));
+            res.json(util.fail(CODE.UNAUTHORIZED, MSG.EXPIRED_TOKEN));
+            return;
         }
-        if (user === TOKEN_INVALID) {
-            return res.json(util.fail(CODE.UNAUTHORIZED, MSG.INVALID_TOKEN));
+        else if (user === TOKEN_INVALID) {
+            res.json(util.fail(CODE.UNAUTHORIZED, MSG.INVALID_TOKEN));
+            return;
         }
-        if (user.userIdx === undefined) {
-            return res.json(util.fail(CODE.UNAUTHORIZED, MSG.INVALID_TOKEN));
+        else if (user.userIdx === undefined) {
+            res.json(util.fail(CODE.UNAUTHORIZED, MSG.INVALID_TOKEN));
+            return;
         }
-        req.decoded = user;
-        next();
+        else {
+            req.decoded = user;
+            next();
+        }
+        
     }
 }
 module.exports = authUtil;
