@@ -41,6 +41,7 @@ module.exports = {
     MATCH_WAITING: "매칭 대기 중",
     MATCH_SUCCESS: "상대 러너와 매칭 성공",
     STOP_MATCHING: "매칭 중단 성공",
+    USER_DELETED: "사용자가 대기열에서 삭제되었습니다",
     OPPONENT_DISCONNECT: "상대방과의 연결이 끊어졌습니다",
     NOT_MATCHED: "매칭되지 않았습니다",
     CONFIRM_WAITING: "상대 러너의 승인 대기 중",
