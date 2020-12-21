@@ -185,7 +185,7 @@ module.exports = {
             }
             else if (awaiters[user_idx].matched === 0) {
                 monitor();
-                res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NOT_MATCHED));
+                res.status(CODE.NOT_FOUND).send(util.fail(CODE.NOT_FOUND, MSG.NOT_MATCHED));
                 return;
             }
             else {
