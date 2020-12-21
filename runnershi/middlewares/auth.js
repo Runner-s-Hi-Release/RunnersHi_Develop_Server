@@ -1,4 +1,3 @@
-const { return } = require('../config/database');
 const jwt = require('../modules/jwt');
 const MSG = require('../modules/responseMessage');
 const CODE = require('../modules/statusCode');
