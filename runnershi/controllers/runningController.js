@@ -24,8 +24,12 @@ module.exports = {
             if (wantGender === 3) {
                 wantGender = [1, 2];
             }
-            else {
+            else if (wantGender === 1 || wantGender === 2) {
                 wantGender = [wantGender];
+            }
+            else {
+                res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.OUT_OF_VALUE));
+                return;
             }
             console.log(req.decoded);
             const user_idx = req.decoded.userIdx;
