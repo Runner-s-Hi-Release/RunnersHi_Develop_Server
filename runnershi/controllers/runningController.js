@@ -61,11 +61,6 @@ module.exports = {
                     res.status(CODE.ACCEPTED).send(util.fail(CODE.ACCEPTED, MSG.NOW_FINDING));
                     return;
                 }
-                else if (matched !== 0) {
-                    monitor();
-                    res.status(CODE.ACCEPTED).send(util.fail(CODE.ACCEPTED, MSG.ALREADY_FOUND));
-                    return;
-                }
                 else {
                     const intervalId = setInterval(async function() {
                         try {
