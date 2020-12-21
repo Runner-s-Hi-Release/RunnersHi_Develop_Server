@@ -262,6 +262,7 @@ module.exports = {
             const {distance, time} = req.body;
             const user_idx = req.decoded.userIdx;
             if (!run_idx || (!distance && distance !== 0) || (!time && time !== 0)) {
+                console.log(`distance: ${distance}, time: ${time}, run_idx: ${run_idx}`);
                 res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NULL_VALUE));
                 return;
             }
