@@ -66,9 +66,6 @@ module.exports = {
                         try {
                             if (user_idx in awaiters) {
                                 awaiters[user_idx].counter += 1;
-                                if (awaiters[user_idx].counter === 1) {
-                                    awaiters[user_idx].intervalId = intervalId;
-                                }
                                 if (awaiters[user_idx].waiting) {
                                     if (awaiters[user_idx].counter > 30) {
                                         awaiters[user_idx].matched = 0;
@@ -78,7 +75,7 @@ module.exports = {
                                         }
                                         clearInterval(intervalId);
                                         delete awaiters[user_idx];
-                                        res.status(CODE.REQUEST_TIMEOUT).send(util.fail(CODE.REQUEST_TIMEOUT, MSG.MATCH_WAITING));
+                                        res.status(CODE.NO_CONTENT).send(util.fail(CODE.NO_CONTENT, MSG.MATCH_WAITING));
                                         return;
                                     }
                                     else if (!(awaiters[user_idx].matched in awaiters)) {
@@ -108,7 +105,7 @@ module.exports = {
                                             monitor();
                                             clearInterval(intervalId);
                                             delete awaiters[user_idx];
-                                            res.status(CODE.REQUEST_TIMEOUT).send(util.fail(CODE.REQUEST_TIMEOUT, MSG.MATCH_WAITING));
+                                            res.status(CODE.NO_CONTENT).send(util.fail(CODE.NO_CONTENT, MSG.MATCH_WAITING));
                                             return;
                                         }
                                         else if (opponent !== undefined) {
@@ -128,10 +125,13 @@ module.exports = {
                             }
                             else {
                                 console.log("Can't Find User!");
+                                clearInterval(intervalId);
+                                res.status(CODE.NOT_FOUND).send(util.fail(CODE.NOT_FOUND, MSG.USER_DELETED));
                             }
                         } catch (err) {
                             console.log("Interval Error from find");
                             clearInterval(intervalId);
+                            res.status(CODE.INTERNAL_SERVER_ERROR).send(util.fail(CODE.INTERNAL_SERVER_ERROR));
                             throw(err);
                         }
                     }, 1000);
@@ -157,9 +157,6 @@ module.exports = {
             else {
                 if (awaiters[user_idx].matched !== 0) {
                     awaiters[awaiters[user_idx].matched].selected = false;
-                }
-                if ("intervalId" in awaiters[user_idx]) {
-                    clearInterval(awaiters[user_idx].intervalId);
                 }
                 delete awaiters[user_idx];
                 monitor();
@@ -233,6 +230,7 @@ module.exports = {
                             awaiters[user_idx].waiting += 1;
                         } catch (err) {
                             console.log("Interval Error from confirm");
+                            res.status(CODE.INTERNAL_SERVER_ERROR).send(util.fail(CODE.INTERNAL_SERVER_ERROR));
                             throw(err);
                         }
                     }, 1000);
