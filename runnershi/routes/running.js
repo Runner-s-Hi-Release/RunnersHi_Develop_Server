@@ -5,7 +5,7 @@ const runningController = require("../controllers/runningController");
 
 /* GET users listing. */
 router.post('/find', auth.checkToken, runningController.findMatching);
-router.post('/confirm', auth.checkToken, runningController.confirmMatching);
+router.get('/confirm', auth.checkToken, runningController.confirmMatching);
 router.delete('/stopMatching', auth.checkToken, runningController.stopMatching);
 router.put('/update/:idx', auth.checkToken, runningController.updateRun);
 router.put('/stopRunning/:idx', auth.checkToken, runningController.stopRunning);
