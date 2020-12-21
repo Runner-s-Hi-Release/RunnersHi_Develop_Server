@@ -46,7 +46,6 @@ module.exports = {
             else {
                 if (!(user_idx in awaiters)) {
                     awaiters[user_idx] = {user_idx: user_idx, time: time, wantGender: wantGender, gender: gender, level: level, nickname: nickname, image: image, win: win, lose: lose, counter: 0, matched: 0, waiting: 0, selected: false, confirmed : false};
-                    setTimeout(() => delete awaiters[user_idx], 180000);
                     monitor();
                 }
                 const {matched, waiting, confirmed} = awaiters[user_idx];
