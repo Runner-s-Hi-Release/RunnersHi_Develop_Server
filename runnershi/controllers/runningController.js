@@ -39,7 +39,7 @@ module.exports = {
                 res.status(CODE.BAD_REQUEST).send(util.fail(CODE.BAD_REQUEST, MSG.NULL_VALUE));
                 return;
             }
-            if (!user_idx || !gender || !image || !level || !nickname || !win || !lose) {
+            if (!user_idx || !gender || !image || !level || !nickname || win === undefined || lose === undefined) {
                 res.status(CODE.DB_ERROR).send(util.fail(CODE.DB_ERROR, MSG.READ_FAIL));
                 return;
             }
