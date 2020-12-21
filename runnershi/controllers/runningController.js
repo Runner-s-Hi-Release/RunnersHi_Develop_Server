@@ -66,9 +66,6 @@ module.exports = {
                         try {
                             if (user_idx in awaiters) {
                                 awaiters[user_idx].counter += 1;
-                                if (awaiters[user_idx].counter === 1) {
-                                    awaiters[user_idx].intervalId = intervalId;
-                                }
                                 if (awaiters[user_idx].waiting) {
                                     if (awaiters[user_idx].counter > 30) {
                                         awaiters[user_idx].matched = 0;
