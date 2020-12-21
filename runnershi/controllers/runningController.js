@@ -199,37 +199,45 @@ module.exports = {
                     awaiters[user_idx].waiting = 1;
                     const intervalId = setInterval(async function() {
                         try {
-                            if (!(awaiters[user_idx].matched in awaiters)) {
-                                awaiters[user_idx].matched = 0;
-                                awaiters[user_idx].waiting = 0;
-                                awaiters[user_idx].confirmed = false;
+                            if (user_idx in awaiters) {
+                                if (!(awaiters[user_idx].matched in awaiters)) {
+                                    awaiters[user_idx].matched = 0;
+                                    awaiters[user_idx].waiting = 0;
+                                    awaiters[user_idx].confirmed = false;
+                                    clearInterval(intervalId);
+                                    res.status(CODE.NOT_FOUND).send(util.fail(CODE.NOT_FOUND, MSG.NO_OPPONENT));
+                                    return;
+                                }
+                                else if (awaiters[awaiters[user_idx].matched].confirmed) {
+                                    const game_idx = awaiters[awaiters[user_idx].matched].game_idx;
+                                    const run_idx = await RunningModel.insertRun(moment().format("YYYY-MM-DD HH:mm:ss"), game_idx, user_idx);
+                                    delete awaiters[awaiters[user_idx].matched];
+                                    delete awaiters[user_idx];
+                                    monitor();
+                                    clearInterval(intervalId);
+                                    res.status(CODE.OK).send(util.success(CODE.OK, MSG.CONFIRM_SUCCESS, {run_idx: run_idx, opponent_level: opponent.level, opponent_nickname: opponent.nickname, opponent_image: opponent.image, opponent_win: opponent.win, opponent_lose: opponent.lose}));
+                                    return;
+                                }
+                                else if (awaiters[user_idx].waiting > 10) {
+                                    delete awaiters[awaiters[user_idx].matched];
+                                    awaiters[user_idx].matched = 0;
+                                    awaiters[user_idx].waiting = 0;
+                                    awaiters[user_idx].confirmed = false;
+                                    monitor();
+                                    clearInterval(intervalId);
+                                    res.status(CODE.ACCEPTED).send(util.success(CODE.ACCEPTED, MSG.OPPONENT_DISCONNECT));
+                                    return;
+                                }
+                                awaiters[user_idx].waiting += 1;
+                            } 
+                            else {
+                                console.log("Can't Find User!");
                                 clearInterval(intervalId);
-                                res.status(CODE.NOT_FOUND).send(util.fail(CODE.NOT_FOUND, MSG.NO_OPPONENT));
-                                return;
+                                res.status(CODE.NOT_FOUND).send(util.fail(CODE.NOT_FOUND, MSG.USER_DELETED));
                             }
-                            else if (awaiters[awaiters[user_idx].matched].confirmed) {
-                                const game_idx = awaiters[awaiters[user_idx].matched].game_idx;
-                                const run_idx = await RunningModel.insertRun(moment().format("YYYY-MM-DD HH:mm:ss"), game_idx, user_idx);
-                                delete awaiters[awaiters[user_idx].matched];
-                                delete awaiters[user_idx];
-                                monitor();
-                                clearInterval(intervalId);
-                                res.status(CODE.OK).send(util.success(CODE.OK, MSG.CONFIRM_SUCCESS, {run_idx: run_idx, opponent_level: opponent.level, opponent_nickname: opponent.nickname, opponent_image: opponent.image, opponent_win: opponent.win, opponent_lose: opponent.lose}));
-                                return;
-                            }
-                            else if (awaiters[user_idx].waiting > 10) {
-                                delete awaiters[awaiters[user_idx].matched];
-                                awaiters[user_idx].matched = 0;
-                                awaiters[user_idx].waiting = 0;
-                                awaiters[user_idx].confirmed = false;
-                                monitor();
-                                clearInterval(intervalId);
-                                res.status(CODE.ACCEPTED).send(util.success(CODE.ACCEPTED, MSG.OPPONENT_DISCONNECT));
-                                return
-                            }
-                            awaiters[user_idx].waiting += 1;
                         } catch (err) {
                             console.log("Interval Error from confirm");
+                            clearInterval(intervalId);
                             res.status(CODE.INTERNAL_SERVER_ERROR).send(util.fail(CODE.INTERNAL_SERVER_ERROR));
                             throw(err);
                         }
