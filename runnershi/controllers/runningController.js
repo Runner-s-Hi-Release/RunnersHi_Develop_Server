@@ -34,7 +34,7 @@ module.exports = {
             else {
                 wantGender = [wantGender];
             }
-            console.log(req.decoded);
+            console.log("find from: ", req.decoded.nickname);
             const user_idx = req.decoded.userIdx;
             const gender = req.decoded.gender;
             const level = req.decoded.level;
@@ -68,8 +68,6 @@ module.exports = {
                                 awaiters[user_idx].counter += 1;
                                 if (awaiters[user_idx].waiting) {
                                     if (awaiters[user_idx].counter > 30) {
-                                        awaiters[user_idx].matched = 0;
-                                        awaiters[user_idx].waiting = 0;
                                         if (awaiters[user_idx].matched in awaiters) {
                                             awaiters[awaiters[user_idx].matched].selected = false;
                                         }
